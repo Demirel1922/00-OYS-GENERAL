@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, CheckCircle2, Lock, Unlock, Trash2, FileDown,
@@ -16,9 +16,14 @@ import { createEmptyIplikSatiri, createEmptyOlcuSatiri, createEmptyGramajSatiri 
 import {
   MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI, KALINLIK_DEGERLERI,
   MAKINE_MODELLERI, YIKAMA_TIPLERI, BURUN_DIKIS_TIPLERI, HAZIRLAYANLAR,
-  BOYLAR, MEKIK_TANIMLARI, MEKIK_KODLARI, IPLIK_NUMARALARI, KAT_DEGERLERI,
-  IPLIK_CINSLERI, TEDARIKCILER,
+  MEKIK_TANIMLARI, MEKIK_KODLARI, KAT_DEGERLERI,
 } from '../constants/lookups';
+import { useLookupStore } from '@/store/lookupStore';
+import { useRenkStore } from '@/store/renkStore';
+import { useIplikDetayStore } from '@/store/iplikDetayStore';
+import { useKalinlikStore } from '@/store/kalinlikStore';
+import { useTedarikciStore } from '@/store/tedarikciStore';
+import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
 
 type TabKey = 'urun' | 'gramaj' | 'yikama' | 'forma' | 'makina' | 'onay';
 
@@ -44,6 +49,26 @@ function LookupSelect({ value, onChange, options, placeholder, disabled, classNa
     >
       <option value="">{placeholder || 'Seçiniz'}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+function StoreSelect({ value, onChange, options, placeholder, disabled, className }: {
+  value: string; onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string; disabled?: boolean; className?: string;
+}) {
+  const hasValue = value && options.some(o => o.value === value);
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      disabled={disabled}
+      className={`border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 ${className || 'w-full'}`}
+    >
+      <option value="">{placeholder || 'Seçiniz'}</option>
+      {value && !hasValue && <option value={value}>{value} (mevcut)</option>}
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   );
 }
@@ -410,6 +435,55 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
 }) {
   const k = kayit.urunKarti;
 
+  // Master data store entegrasyonları
+  const { items: lookupItems, seedData: seedLookup, getSortedItemsByType } = useLookupStore();
+  const { renkler, seedData: seedRenk } = useRenkStore();
+  const { detaylar: iplikDetaylar, seedData: seedIplikDetay } = useIplikDetayStore();
+  const { kalinliklar, seedData: seedKalinlik, getBirlesikGosterim } = useKalinlikStore();
+  const { tedarikciler, seedData: seedTedarikci } = useTedarikciStore();
+  const { kategoriler: tedarikciKategorileri, seedData: seedTedarikciKategori } = useTedarikciKategoriStore();
+
+  useEffect(() => {
+    if (lookupItems.length === 0) seedLookup();
+    if (renkler.length === 0) seedRenk();
+    if (iplikDetaylar.length === 0) seedIplikDetay();
+    if (kalinliklar.length === 0) seedKalinlik();
+    if (tedarikciler.length === 0) seedTedarikci();
+    if (tedarikciKategorileri.length === 0) seedTedarikciKategori();
+  }, []);
+
+  const boyOptions = useMemo(() =>
+    getSortedItemsByType('BEDEN').map(item => ({ value: item.ad, label: item.ad })),
+    [lookupItems]
+  );
+
+  const renkOptions = useMemo(() =>
+    renkler.filter(r => r.durum === 'AKTIF').map(r => ({ value: r.renkAdi, label: r.renkAdi })),
+    [renkler]
+  );
+
+  const cinsOptions = useMemo(() =>
+    iplikDetaylar.filter(d => d.durum === 'AKTIF').map(d => ({ value: d.detayAdi, label: d.detayAdi })),
+    [iplikDetaylar]
+  );
+
+  const denyeOptions = useMemo(() =>
+    kalinliklar.filter(k2 => k2.durum === 'AKTIF').map(k2 => {
+      const gosterim = getBirlesikGosterim(k2);
+      return { value: gosterim, label: gosterim };
+    }),
+    [kalinliklar, getBirlesikGosterim]
+  );
+
+  const tedarikciOptions = useMemo(() => {
+    const iplikKategoriIds = tedarikciKategorileri
+      .filter(kat => kat.kategoriAdi?.toLocaleLowerCase('tr').includes('iplik'))
+      .map(kat => kat.id);
+    return tedarikciler
+      .filter(t => t.durum === 'AKTIF' && (t.kategoriIds || []).some(kid => iplikKategoriIds.includes(kid)))
+      .map(t => ({ value: t.tedarikciAdi, label: `${t.tedarikciKodu} - ${t.tedarikciAdi}` }));
+  }, [tedarikciler, tedarikciKategorileri]);
+
   const handleUrunPdfView = async () => {
     // TODO: PDF özelliği şu an devre dışı — jspdf dependency eklenmediği için.
     // İleride @react-pdf/renderer ile uyarlanacak.
@@ -445,7 +519,7 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
         </FormField>
         <ReadonlyField label="Numune Tarihi" value={k.numuneTarihi} />
         <FormField label="Boy">
-          <LookupSelect value={k.boy} onChange={v => updateField('boy', v)} options={BOYLAR} disabled={locked} />
+          <StoreSelect value={k.boy} onChange={v => updateField('boy', v)} options={boyOptions} disabled={locked} />
         </FormField>
         <FormField label="Burun Kapama">
           <LookupSelect value={k.burunKapama} onChange={v => updateField('burunKapama', v)} options={BURUN_DIKIS_TIPLERI} disabled={locked} />
@@ -509,13 +583,13 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
                   <td className="py-1 px-2 text-gray-400">{idx + 1}</td>
                   <td className="py-1 px-1"><LookupSelect value={ip.iplikYeri} onChange={v => updateIplik(idx, 'iplikYeri', v)} options={MEKIK_TANIMLARI} disabled={locked} className="w-full text-xs" /></td>
                   <td className="py-1 px-1"><LookupSelect value={ip.mekikKodu} onChange={v => updateIplik(idx, 'mekikKodu', v)} options={MEKIK_KODLARI} disabled={locked} className="w-full text-xs" /></td>
-                  <td className="py-1 px-1"><LookupSelect value={ip.denye} onChange={v => updateIplik(idx, 'denye', v)} options={IPLIK_NUMARALARI} disabled={locked} className="w-full text-xs" /></td>
+                  <td className="py-1 px-1"><StoreSelect value={ip.denye} onChange={v => updateIplik(idx, 'denye', v)} options={denyeOptions} disabled={locked} className="w-full text-xs" /></td>
                   <td className="py-1 px-1"><LookupSelect value={ip.kat} onChange={v => updateIplik(idx, 'kat', v)} options={KAT_DEGERLERI} disabled={locked} className="w-full text-xs" /></td>
-                  <td className="py-1 px-1"><LookupSelect value={ip.iplikCinsi} onChange={v => updateIplik(idx, 'iplikCinsi', v)} options={IPLIK_CINSLERI} disabled={locked} className="w-full text-xs" /></td>
+                  <td className="py-1 px-1"><StoreSelect value={ip.iplikCinsi} onChange={v => updateIplik(idx, 'iplikCinsi', v)} options={cinsOptions} disabled={locked} className="w-full text-xs" /></td>
                   <td className="py-1 px-1"><FieldInput value={ip.iplikTanimi} onChange={v => updateIplik(idx, 'iplikTanimi', v)} disabled={locked} className="w-full text-xs" /></td>
-                  <td className="py-1 px-1"><FieldInput value={ip.renk} onChange={v => updateIplik(idx, 'renk', v)} disabled={locked} className="w-full text-xs" /></td>
+                  <td className="py-1 px-1"><StoreSelect value={ip.renk} onChange={v => updateIplik(idx, 'renk', v)} options={renkOptions} disabled={locked} className="w-full text-xs" /></td>
                   <td className="py-1 px-1"><FieldInput value={ip.renkKodu} onChange={v => updateIplik(idx, 'renkKodu', v)} disabled={locked} className="w-full text-xs" /></td>
-                  <td className="py-1 px-1"><LookupSelect value={ip.tedarikci} onChange={v => updateIplik(idx, 'tedarikci', v)} options={TEDARIKCILER} disabled={locked} className="w-full text-xs" /></td>
+                  <td className="py-1 px-1"><StoreSelect value={ip.tedarikci} onChange={v => updateIplik(idx, 'tedarikci', v)} options={tedarikciOptions} disabled={locked} className="w-full text-xs" /></td>
                   {!locked && (
                     <td className="py-1 px-1">
                       <button onClick={() => removeIplik(idx)} className="text-red-400 hover:text-red-600" title="Satırı sil">
@@ -558,7 +632,7 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
             <tbody>
               {k.olculer.map((o, idx) => (
                 <tr key={o.id} className="border-t border-gray-100">
-                  <td className="py-1 px-1"><LookupSelect value={o.boy} onChange={v => updateOlcu(idx, 'boy', v)} options={BOYLAR} disabled={locked} className="w-full text-xs" /></td>
+                  <td className="py-1 px-1"><StoreSelect value={o.boy} onChange={v => updateOlcu(idx, 'boy', v)} options={boyOptions} disabled={locked} className="w-full text-xs" /></td>
                   <td className="py-1 px-1"><FieldInput value={o.lastikBoyu} onChange={v => updateOlcu(idx, 'lastikBoyu', v)} disabled={locked} className="w-16 text-xs" /></td>
                   <td className="py-1 px-1"><FieldInput value={o.lastikEni} onChange={v => updateOlcu(idx, 'lastikEni', v)} disabled={locked} className="w-16 text-xs" /></td>
                   <td className="py-1 px-1"><FieldInput value={o.koncBoyu} onChange={v => updateOlcu(idx, 'koncBoyu', v)} disabled={locked} className="w-16 text-xs" /></td>
