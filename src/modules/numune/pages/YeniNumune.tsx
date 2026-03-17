@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, CheckCircle, Plus, Trash2, Loader2, X, Check, Edit3 } from 'lucide-react';
 import {
-  MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI, BOYLAR,
+  MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI,
 } from '../../uretim-hazirlik/constants/lookups';
 import { useRenkStore } from '@/store/renkStore';
 import { useIplikDetayStore } from '@/store/iplikDetayStore';
 import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
+import { useLookupStore } from '@/store/lookupStore';
 
 interface MeasurementRow {
   id: number;
@@ -197,6 +198,11 @@ export function YeniNumune() {
   const { renkler, seedData: seedRenk } = useRenkStore();
   useEffect(() => { if (renkler.length === 0) seedRenk(); }, []);
   const aktifRenkler = useMemo(() => renkler.filter(r => r.durum === 'AKTIF'), [renkler]);
+
+  // Boy (Beden) master data entegrasyonu — lookupStore üzerinden
+  const { items: lookupItems, seedData: seedLookup, getSortedItemsByType } = useLookupStore();
+  useEffect(() => { if (lookupItems.length === 0) seedLookup(); }, []);
+  const boyListesi = useMemo(() => getSortedItemsByType('BEDEN'), [lookupItems]);
 
   // İplik Bilgileri store entegrasyonları
   const { detaylar: iplikDetaylar, seedData: seedIplikDetay } = useIplikDetayStore();
@@ -733,7 +739,10 @@ export function YeniNumune() {
                       <td className="px-1 py-0.5">
                         <select value={row.bedenler} onChange={(e) => handleMeasurementChange(idx, 'bedenler', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
                           <option value="">Seçiniz</option>
-                          {BOYLAR.map(b => <option key={b} value={b}>{b}</option>)}
+                          {row.bedenler && !boyListesi.some(b => b.ad === row.bedenler) && (
+                            <option value={row.bedenler}>{row.bedenler}</option>
+                          )}
+                          {boyListesi.map(b => <option key={b.id} value={b.ad}>{b.ad}</option>)}
                         </select>
                       </td>
                       <td className="px-1 py-0.5">
