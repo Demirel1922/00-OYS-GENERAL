@@ -93,6 +93,14 @@ export default function BilgiGirisleri() {
   const tipCount = items.filter(i => i.lookupType === 'TIP').length;
   const cinsiyetCount = items.filter(i => i.lookupType === 'CINSIYET').length;
 
+  // Numune sıra sayacını kaydet — [A-Z][0-9] formatında doğrulama
+  const saveNumuneSira = () => {
+    const val = tempNumuneSira || 'A0';
+    if (/^[A-Z]\d$/.test(val)) {
+      setNumuneCounter(val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
+    }
+  };
+
   const subModules: SubModule[] = [
     {
       id: 'musteriler',
@@ -293,35 +301,25 @@ export default function BilgiGirisleri() {
                     <>
                       <Input
                         type="text"
-                        maxLength={3}
+                        maxLength={2}
                         value={tempNumuneSira}
                         onChange={(e) => {
-                          const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                          // Sadece [A-Z][0-9] formatına izin ver
+                          let val = e.target.value.toUpperCase();
+                          if (val.length === 1) val = val.replace(/[^A-Z]/g, '');
+                          else if (val.length === 2) val = val.charAt(0).replace(/[^A-Z]/g, '') + val.charAt(1).replace(/[^0-9]/g, '');
+                          else val = val.replace(/[^A-Z0-9]/g, '').slice(0, 2);
                           setTempNumuneSira(val);
                         }}
                         className="w-24 h-9 text-center font-bold uppercase"
                         autoFocus
                         placeholder="A0"
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const val = tempNumuneSira || 'A0';
-                            const harf = val.charAt(0);
-                            const sayi = val.slice(1);
-                            if (harf >= 'A' && harf <= 'Z' && /^\d$/.test(sayi)) {
-                              setNumuneCounter(val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
-                            }
-                          }
+                          if (e.key === 'Enter') saveNumuneSira();
                           if (e.key === 'Escape') setEditingNumuneSira(false);
                         }}
                       />
-                      <Button size="sm" onClick={() => {
-                        const val = tempNumuneSira || 'A0';
-                        const harf = val.charAt(0);
-                        const sayi = val.slice(1);
-                        if (harf >= 'A' && harf <= 'Z' && /^\d$/.test(sayi)) {
-                          setNumuneCounter(val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
-                        }
-                      }}>Kaydet</Button>
+                      <Button size="sm" onClick={saveNumuneSira}>Kaydet</Button>
                       <Button size="sm" variant="outline" onClick={() => setEditingNumuneSira(false)}>İptal</Button>
                     </>
                   ) : (

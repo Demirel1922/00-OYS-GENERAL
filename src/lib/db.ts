@@ -173,6 +173,9 @@ function siraToIndex(sira: string): number {
   return (harf.charCodeAt(0) - 65) * 9 + sayi;
 }
 
+/** Maksimum sıra sayısı: 26 harf × 9 rakam = 234 (A1'den Z9'a) */
+const MAX_SIRA_COUNT = 234;
+
 /**
  * Numune numarası üret
  * cinsiyetKodu: "1"-"6"
@@ -220,7 +223,7 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
 
   let finalSira = yeniSira;
   let safety = 0;
-  while (usedSiras.has(finalSira) && safety < 234) {
+  while (usedSiras.has(finalSira) && safety < MAX_SIRA_COUNT) {
     finalSira = nextSira(finalSira);
     safety++;
   }
