@@ -1,6 +1,16 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, CheckCircle, Plus, Trash2, Loader2, X, Check, Edit3 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI,
 } from '../../uretim-hazirlik/constants/lookups';
@@ -178,6 +188,8 @@ export function YeniNumune() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const pendingRestoreRef = useRef<{ data: string; time: string | null } | null>(null);
 
   // Renk store entegrasyonu (sipariş modülü referans alındı)
   const { renkler, seedData: seedRenk } = useRenkStore();
@@ -221,6 +233,21 @@ export function YeniNumune() {
     setTimeout(() => setToast({ show: false, message: '', type }), 3000);
   }, []);
 
+  const handleRestoreConfirm = () => {
+    if (pendingRestoreRef.current) {
+      setFormData(JSON.parse(pendingRestoreRef.current.data));
+      if (pendingRestoreRef.current.time) setLastSaved(pendingRestoreRef.current.time);
+      showToast('Önceki kayıt yüklendi', 'info');
+      pendingRestoreRef.current = null;
+    }
+    setShowRestoreDialog(false);
+  };
+
+  const handleRestoreCancel = () => {
+    pendingRestoreRef.current = null;
+    setShowRestoreDialog(false);
+  };
+
   useEffect(() => {
     if (location.state?.editMode && location.state?.numuneId) {
       setIsEditMode(true);
@@ -246,15 +273,11 @@ export function YeniNumune() {
       const saved = localStorage.getItem('oys_numune_yeniFormData');
       const savedTime = localStorage.getItem('oys_numune_yeniLastSaved');
       if (saved) {
-        const confirmLoad = window.confirm('Önceki kaydınızı geri yüklemek ister misiniz?');
-        if (confirmLoad) {
-          setFormData(JSON.parse(saved));
-          if (savedTime) setLastSaved(savedTime);
-          showToast('Önceki kayıt yüklendi', 'info');
-        }
+        pendingRestoreRef.current = { data: saved, time: savedTime };
+        setShowRestoreDialog(true);
       }
     }
-  }, [isEditMode, showToast]);
+  }, [isEditMode]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -534,6 +557,22 @@ export function YeniNumune() {
           {toast.message}
         </div>
       )}
+
+      {/* Önceki kaydı geri yükleme dialog'u */}
+      <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Önceki Kayıt Bulundu</AlertDialogTitle>
+            <AlertDialogDescription>
+              Önceki kaydınızı geri yüklemek ister misiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleRestoreCancel}>Hayır</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestoreConfirm}>Evet, Yükle</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex justify-between items-start mb-4 border-b border-gray-200 pb-3">
