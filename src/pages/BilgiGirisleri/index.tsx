@@ -66,7 +66,8 @@ export default function BilgiGirisleri() {
   const [editingSeq, setEditingSeq] = useState(false);
   const [tempSeq, setTempSeq] = useState('');
 
-  // Numune sıra sayacı
+  // Numune sıra sayacı — cinsiyet bazlı
+  const [selectedCinsiyet, setSelectedCinsiyet] = useState<string>('1');
   const [numuneSira, setNumuneSira] = useState<string>('A0');
   const [editingNumuneSira, setEditingNumuneSira] = useState(false);
   const [tempNumuneSira, setTempNumuneSira] = useState('');
@@ -84,8 +85,8 @@ export default function BilgiGirisleri() {
     if (renkler.length === 0) seedRenk();
     // Sipariş sayacını yükle
     getOrderCounter().then(setOrderSeq);
-    // Numune sayacını yükle
-    getNumuneCounter().then(setNumuneSira);
+    // Numune sayacını yükle (varsayılan cinsiyet: 1 - Erkek)
+    getNumuneCounter('1').then(setNumuneSira);
   }, []);
 
   // Lookup sayılarını hesapla
@@ -97,8 +98,15 @@ export default function BilgiGirisleri() {
   const saveNumuneSira = () => {
     const val = tempNumuneSira || 'A0';
     if (/^[A-Z]\d$/.test(val)) {
-      setNumuneCounter(val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
+      setNumuneCounter(selectedCinsiyet, val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
     }
+  };
+
+  // Cinsiyet değiştiğinde ilgili sayacı yükle
+  const handleCinsiyetChange = (kod: string) => {
+    setSelectedCinsiyet(kod);
+    setEditingNumuneSira(false);
+    getNumuneCounter(kod).then(setNumuneSira);
   };
 
   const subModules: SubModule[] = [
@@ -284,7 +292,7 @@ export default function BilgiGirisleri() {
           </Card>
         </div>
 
-        {/* Son Numune Sıra No */}
+        {/* Son Numune Sıra No — Cinsiyet Bazlı */}
         <div className="mb-8">
           <Card className="bg-indigo-50 border-indigo-200">
             <CardContent className="pt-4 pb-4">
@@ -293,10 +301,22 @@ export default function BilgiGirisleri() {
                   <Hash className="w-6 h-6 text-indigo-600" />
                   <div>
                     <p className="text-sm text-indigo-700 font-medium">Son Numune Sırası ({new Date().getFullYear()})</p>
-                    <p className="text-xs text-indigo-500">Yeni numune bu sıradan sonraki ilk boş sırayı alır</p>
+                    <p className="text-xs text-indigo-500">Her cinsiyet için ayrı sıra sayacı</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <select
+                    value={selectedCinsiyet}
+                    onChange={(e) => handleCinsiyetChange(e.target.value)}
+                    className="h-9 px-2 text-sm border border-indigo-300 rounded-md bg-white text-indigo-900 font-medium"
+                  >
+                    <option value="1">1 - Erkek</option>
+                    <option value="2">2 - Kadın</option>
+                    <option value="3">3 - Çocuk</option>
+                    <option value="4">4 - Bebek</option>
+                    <option value="5">5 - Unisex</option>
+                    <option value="6">6 - Külotlu</option>
+                  </select>
                   {editingNumuneSira ? (
                     <>
                       <Input

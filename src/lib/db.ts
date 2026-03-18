@@ -8,11 +8,12 @@ export interface OrderCounter {
   lastSeq: number;
 }
 
-// Numune sayaç tipi
+// Numune sayaç tipi — her cinsiyet için ayrı sayaç
 export interface NumuneCounter {
   id?: number;
-  year: number;      // Tam yıl: 2026
-  lastSira: string;  // Son sıra: "A0" (başlangıç), "A1", "A9", "B1", ... "Z9"
+  year: number;          // Tam yıl: 2026
+  cinsiyetKodu: string;  // "1"-"6" cinsiyet kodu
+  lastSira: string;      // Son sıra: "A0" (başlangıç), "A1", "A9", "B1", ... "Z9"
 }
 
 export class OysDatabase extends Dexie {
@@ -54,12 +55,23 @@ export class OysDatabase extends Dexie {
       orderCounter: '++id, year',
     });
 
-    // v4: numuneCounter tablosu eklendi
+    // v4: numuneCounter tablosu eklendi (eski global sayaç — v5 ile değiştirildi)
     this.version(4).stores({
       salesOrders: '++id, order_no, customer_id, status, order_date, requested_termin, shipped_at',
       priceAuditLogs: '++id, order_id, changed_at',
       orderCounter: '++id, year',
       numuneCounter: '++id, year',
+    });
+
+    // v5: numuneCounter cinsiyet bazlı compound index
+    this.version(5).stores({
+      salesOrders: '++id, order_no, customer_id, status, order_date, requested_termin, shipped_at',
+      priceAuditLogs: '++id, order_id, changed_at',
+      orderCounter: '++id, year',
+      numuneCounter: '++id, [year+cinsiyetKodu]',
+    }).upgrade(tx => {
+      // Eski global sayaç kayıtlarını temizle — cinsiyet bazlı yenileri oluşturulacak
+      return tx.table('numuneCounter').toCollection().delete();
     });
   }
 }
@@ -186,6 +198,7 @@ const MAX_SIRA_COUNT = 234;
  * cinsiyetKodu: "1"-"6"
  * Dönen format: [cinsiyetKodu][yılSonHane][harf][sayı] → ör. "16A1"
  *
+ * Her cinsiyet kendi bağımsız sıra sayacına sahiptir.
  * NOT: Bu fonksiyon sayacı güncellemez. Kayıt sırasında
  * commitNumuneSira() çağrılarak sayaç kalıcı olarak ilerletilmelidir.
  */
@@ -195,37 +208,26 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
 
   // localStorage'dan göç kontrolü (tek seferlik)
   const legacySira = localStorage.getItem('oys_numune_sira');
-
-  // Sayacı al veya oluştur
-  let counter = await db.numuneCounter.where('year').equals(currentYear).first();
-  if (!counter) {
-    // Yeni yıl veya ilk kullanım — eğer legacy varsa aktar
-    const initialSira = legacySira || 'A0';
-    const id = await db.numuneCounter.add({ year: currentYear, lastSira: initialSira });
-    counter = { id: id as number, year: currentYear, lastSira: initialSira };
-    // Legacy temizle
-    if (legacySira) {
-      localStorage.removeItem('oys_numune_sira');
-    }
-  } else if (legacySira) {
-    // Sayaç zaten var ama legacy hâlâ duruyorsa temizle
-    // Legacy'nin daha ileri olup olmadığını kontrol et
-    if (siraToIndex(legacySira) > siraToIndex(counter.lastSira)) {
-      await db.numuneCounter.update(counter.id!, { lastSira: legacySira });
-      counter.lastSira = legacySira;
-    }
+  if (legacySira) {
     localStorage.removeItem('oys_numune_sira');
+  }
+
+  // Cinsiyet bazlı sayacı al veya oluştur
+  let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
+  if (!counter) {
+    const id = await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: 'A0' });
+    counter = { id: id as number, year: currentYear, cinsiyetKodu, lastSira: 'A0' };
   }
 
   // Bir sonraki sırayı hesapla
   const yeniSira = nextSira(counter.lastSira);
 
-  // Çakışma kontrolü: mevcut numune listesindeki numaralar
+  // Çakışma kontrolü: mevcut numune listesindeki aynı cinsiyet+yıl numaraları
   const mevcutListe = JSON.parse(localStorage.getItem('oys_numune_listesi') || '[]');
   const usedSiras = new Set(
     mevcutListe
       .map((n: any) => n.numuneNo || n.generalInfo?.numuneNo || '')
-      .filter((no: string) => no.length >= 3 && no.charAt(1) === yilHanesi)
+      .filter((no: string) => no.length >= 3 && no.charAt(0) === cinsiyetKodu && no.charAt(1) === yilHanesi)
       .map((no: string) => no.slice(2)) // Harf+Sayı kısmı
   );
 
@@ -244,50 +246,47 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
 /**
  * Numune kaydedildikten sonra sayacı kalıcı olarak ilerlet.
  * numuneNo: kaydedilen numune numarası (ör. "16A1")
- * Sıra kısmını (ör. "A1") çıkarıp sayacı günceller.
+ * 1. karakterden cinsiyet kodu, kalan kısımdan sırayı çıkarıp
+ * ilgili cinsiyetin sayacını günceller.
  */
 export async function commitNumuneSira(numuneNo: string): Promise<void> {
   if (!numuneNo || numuneNo.length < 3) return;
+  const cinsiyetKodu = numuneNo.charAt(0); // "16A1" → "1"
   const sira = numuneNo.slice(2); // "16A1" → "A1"
   // Geçersiz format koruması
   if (!/^[A-Z]\d$/.test(sira)) return;
+  if (!/^[1-6]$/.test(cinsiyetKodu)) return;
   const currentYear = new Date().getFullYear();
-  let counter = await db.numuneCounter.where('year').equals(currentYear).first();
+  let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
   if (counter) {
     // Sadece ileri gidiyorsa güncelle (geri alma engeli)
     if (siraToIndex(sira) > siraToIndex(counter.lastSira)) {
       await db.numuneCounter.update(counter.id!, { lastSira: sira });
     }
   } else {
-    await db.numuneCounter.add({ year: currentYear, lastSira: sira });
+    await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: sira });
   }
 }
 
 /**
- * Mevcut yılın numune sayacını oku
+ * Belirli bir cinsiyetin mevcut yıldaki numune sayacını oku
  */
-export async function getNumuneCounter(): Promise<string> {
+export async function getNumuneCounter(cinsiyetKodu: string): Promise<string> {
   const currentYear = new Date().getFullYear();
-  const counter = await db.numuneCounter.where('year').equals(currentYear).first();
-
-  // localStorage'dan göç kontrolü
-  if (!counter) {
-    const legacySira = localStorage.getItem('oys_numune_sira');
-    return legacySira || 'A0';
-  }
-  return counter.lastSira;
+  const counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
+  return counter?.lastSira || 'A0';
 }
 
 /**
- * Mevcut yılın numune sayacını elle güncelle
+ * Belirli bir cinsiyetin mevcut yıldaki numune sayacını elle güncelle
  */
-export async function setNumuneCounter(newSira: string): Promise<void> {
+export async function setNumuneCounter(cinsiyetKodu: string, newSira: string): Promise<void> {
   const currentYear = new Date().getFullYear();
-  let counter = await db.numuneCounter.where('year').equals(currentYear).first();
+  let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
   if (counter) {
     await db.numuneCounter.update(counter.id!, { lastSira: newSira });
   } else {
-    await db.numuneCounter.add({ year: currentYear, lastSira: newSira });
+    await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: newSira });
   }
 }
 
