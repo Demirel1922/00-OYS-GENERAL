@@ -1,6 +1,16 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, CheckCircle, Plus, Trash2, Loader2, X, Check, Edit3 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI,
 } from '../../uretim-hazirlik/constants/lookups';
@@ -10,6 +20,7 @@ import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
 import { useLookupStore } from '@/store/lookupStore';
+import { generateNumuneNo, commitNumuneSira } from '@/lib/db';
 
 interface MeasurementRow {
   id: number;
@@ -54,7 +65,11 @@ const CINSIYET_OPTIONS = [
   { value: '3', label: '3 - Çocuk' },
   { value: '4', label: '4 - Bebek' },
   { value: '5', label: '5 - Unisex' },
-  { value: '6', label: '6 - Külotlu Çorap' },
+  { value: '6', label: '6 - Külotlu' },
+  { value: '7', label: '7 - Erkek 2' },
+  { value: '8', label: '8 - Kadın 2' },
+  { value: '9', label: '9 - Bebek-Çocuk 2' },
+  { value: '0', label: '0 - Unisex 2' },
 ];
 
 const NUMUNE_TIPI_OPTIONS = [
@@ -105,26 +120,6 @@ const CORAP_DOKUSU_OPTIONS = [
 
 const YIKAMA_OPTIONS = ['Var', 'Yok', 'Hafif', 'Sert'];
 const BIRIM_OPTIONS = ['Çift', 'Düzine', 'Adet'];
-
-const generateNumuneNo = (cinsiyetKodu: string): string => {
-  const yilHanesi = new Date().getFullYear().toString().slice(-1);
-  const storedSira = localStorage.getItem('oys_numune_sira') || 'A0';
-  let harf = storedSira.charAt(0);
-  let sayi = parseInt(storedSira.slice(1));
-  sayi++;
-  if (sayi > 9) {
-    sayi = 1;
-    harf = String.fromCharCode(harf.charCodeAt(0) + 1);
-    if (harf > 'Z') harf = 'A';
-  }
-  const yeniSira = `${harf}${sayi}`;
-  return `${cinsiyetKodu}${yilHanesi}${yeniSira}`;
-};
-
-const saveSira = (numuneNo: string) => {
-  const sira = numuneNo.slice(2);
-  localStorage.setItem('oys_numune_sira', sira);
-};
 
 const getFixedYarnRows = (): YarnRow[] => [
   { id: 1, kullanimYeri: 'LASTİK', detay: 'Lastik Elastiği', denye: '', cins: '', renkKodu: '', renk: '', tedarikci: '', not: '', isFixed: true },
@@ -193,6 +188,8 @@ export function YeniNumune() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [formData, setFormData] = useState(initialFormData);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const pendingRestoreRef = useRef<{ data: string; time: string | null } | null>(null);
 
   // Renk store entegrasyonu (sipariş modülü referans alındı)
   const { renkler, seedData: seedRenk } = useRenkStore();
@@ -236,6 +233,21 @@ export function YeniNumune() {
     setTimeout(() => setToast({ show: false, message: '', type }), 3000);
   }, []);
 
+  const handleRestoreConfirm = () => {
+    if (pendingRestoreRef.current) {
+      setFormData(JSON.parse(pendingRestoreRef.current.data));
+      if (pendingRestoreRef.current.time) setLastSaved(pendingRestoreRef.current.time);
+      showToast('Önceki kayıt yüklendi', 'info');
+      pendingRestoreRef.current = null;
+    }
+    setShowRestoreDialog(false);
+  };
+
+  const handleRestoreCancel = () => {
+    pendingRestoreRef.current = null;
+    setShowRestoreDialog(false);
+  };
+
   useEffect(() => {
     if (location.state?.editMode && location.state?.numuneId) {
       setIsEditMode(true);
@@ -261,15 +273,11 @@ export function YeniNumune() {
       const saved = localStorage.getItem('oys_numune_yeniFormData');
       const savedTime = localStorage.getItem('oys_numune_yeniLastSaved');
       if (saved) {
-        const confirmLoad = window.confirm('Önceki kaydınızı geri yüklemek ister misiniz?');
-        if (confirmLoad) {
-          setFormData(JSON.parse(saved));
-          if (savedTime) setLastSaved(savedTime);
-          showToast('Önceki kayıt yüklendi', 'info');
-        }
+        pendingRestoreRef.current = { data: saved, time: savedTime };
+        setShowRestoreDialog(true);
       }
     }
-  }, [isEditMode, showToast]);
+  }, [isEditMode]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -282,11 +290,22 @@ export function YeniNumune() {
 
   useEffect(() => {
     if (formData.generalInfo.cinsiyet && !isEditMode) {
-      const newNumuneNo = generateNumuneNo(formData.generalInfo.cinsiyet);
-      setFormData(prev => ({
-        ...prev,
-        generalInfo: { ...prev.generalInfo, numuneNo: newNumuneNo }
-      }));
+      generateNumuneNo(formData.generalInfo.cinsiyet).then(newNumuneNo => {
+        setFormData(prev => ({
+          ...prev,
+          generalInfo: { ...prev.generalInfo, numuneNo: newNumuneNo }
+        }));
+      }).catch((err) => {
+        if (err?.message === 'KAPASITE_DOLU') {
+          showToast('Bu çorap grubu kodunda numune kapasitesi doldu (A0-Z9). Lütfen yeni bir çorap grubu seçin.', 'error');
+          setFormData(prev => ({
+            ...prev,
+            generalInfo: { ...prev.generalInfo, numuneNo: '', cinsiyet: '' }
+          }));
+        } else {
+          showToast('Numune numarası üretilemedi', 'error');
+        }
+      });
     }
   }, [formData.generalInfo.cinsiyet, isEditMode]);
 
@@ -380,7 +399,7 @@ export function YeniNumune() {
   const getMissingGeneralFields = () => {
     const g = formData.generalInfo;
     const missing = [];
-    if (!g.cinsiyet?.trim()) missing.push('Cinsiyet');
+    if (!g.cinsiyet?.trim()) missing.push('Çorap Grubu');
     if (!g.numuneTipi?.trim()) missing.push('Numune Tipi');
     if (!g.sebep?.trim()) missing.push('Sebep');
     if (!g.musteriKodu?.trim()) missing.push('Müşteri Kodu');
@@ -407,7 +426,7 @@ export function YeniNumune() {
 
   const validate = () => {
     const g = formData.generalInfo;
-    if (!g.cinsiyet?.trim()) { showToast('Cinsiyet zorunludur', 'error'); return false; }
+    if (!g.cinsiyet?.trim()) { showToast('Çorap Grubu zorunludur', 'error'); return false; }
     if (!g.numuneTipi?.trim()) { showToast('Numune Tipi zorunludur', 'error'); return false; }
     if (!g.sebep?.trim()) { showToast('Numunenin Sebebi zorunludur', 'error'); return false; }
     if (!g.musteriKodu?.trim()) { showToast('Müşteri Kodu zorunludur', 'error'); return false; }
@@ -441,8 +460,9 @@ export function YeniNumune() {
     if (!validate()) return;
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 500));
+    // Yeni kayıt ise sayacı kalıcı olarak ilerlet
     if (formData.generalInfo.numuneNo && !isEditMode) {
-      saveSira(formData.generalInfo.numuneNo);
+      await commitNumuneSira(formData.generalInfo.numuneNo);
     }
     const yeniNumune = {
       id: isEditMode ? editId : Date.now(),
@@ -481,8 +501,9 @@ export function YeniNumune() {
     if (!validate()) return;
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 500));
+    // Yeni kayıt ise sayacı kalıcı olarak ilerlet
     if (formData.generalInfo.numuneNo && !isEditMode) {
-      saveSira(formData.generalInfo.numuneNo);
+      await commitNumuneSira(formData.generalInfo.numuneNo);
     }
     const yeniNumune = {
       id: isEditMode ? editId : Date.now(),
@@ -537,6 +558,22 @@ export function YeniNumune() {
         </div>
       )}
 
+      {/* Önceki kaydı geri yükleme dialog'u */}
+      <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Önceki Kayıt Bulundu</AlertDialogTitle>
+            <AlertDialogDescription>
+              Önceki kaydınızı geri yüklemek ister misiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleRestoreCancel}>Hayır</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestoreConfirm}>Evet, Yükle</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex justify-between items-start mb-4 border-b border-gray-200 pb-3">
           <div>
@@ -583,10 +620,10 @@ export function YeniNumune() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Numune No</label>
-                <input type="text" disabled value={formData.generalInfo.numuneNo} placeholder="Cinsiyet seçince otomatik oluşur" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-100 text-gray-600 text-sm" />
+                <input type="text" disabled value={formData.generalInfo.numuneNo} placeholder="Çorap Grubu seçince otomatik oluşur" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-100 text-gray-600 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cinsiyet *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Grubu *</label>
                 <select value={formData.generalInfo.cinsiyet} onChange={(e) => handleGeneralChange('cinsiyet', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
                   <option value="">Seçiniz</option>
                   {CINSIYET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}

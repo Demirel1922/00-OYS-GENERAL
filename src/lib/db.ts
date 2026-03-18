@@ -8,10 +8,19 @@ export interface OrderCounter {
   lastSeq: number;
 }
 
+// Numune sayaç tipi — her grup kodu için ayrı sayaç
+export interface NumuneCounter {
+  id?: number;
+  year: number;          // Tam yıl: 2026
+  cinsiyetKodu: string;  // "0"-"9" grup kodu
+  lastSira: string;      // Son kullanılan sıra: "" (henüz yok), "A0", "A1", ... "Z9"
+}
+
 export class OysDatabase extends Dexie {
   salesOrders!: Dexie.Table<SalesOrder>;
   priceAuditLogs!: Dexie.Table<PriceAuditLog>;
   orderCounter!: Dexie.Table<OrderCounter>;
+  numuneCounter!: Dexie.Table<NumuneCounter>;
 
   constructor() {
     super('OysDatabase');
@@ -44,6 +53,25 @@ export class OysDatabase extends Dexie {
       salesOrders: '++id, order_no, customer_id, status, order_date, requested_termin, shipped_at',
       priceAuditLogs: '++id, order_id, changed_at',
       orderCounter: '++id, year',
+    });
+
+    // v4: numuneCounter tablosu eklendi (eski global sayaç — v5 ile değiştirildi)
+    this.version(4).stores({
+      salesOrders: '++id, order_no, customer_id, status, order_date, requested_termin, shipped_at',
+      priceAuditLogs: '++id, order_id, changed_at',
+      orderCounter: '++id, year',
+      numuneCounter: '++id, year',
+    });
+
+    // v5: numuneCounter cinsiyet bazlı compound index
+    this.version(5).stores({
+      salesOrders: '++id, order_no, customer_id, status, order_date, requested_termin, shipped_at',
+      priceAuditLogs: '++id, order_id, changed_at',
+      orderCounter: '++id, year',
+      numuneCounter: '++id, [year+cinsiyetKodu]',
+    }).upgrade(tx => {
+      // Eski global sayaç kayıtlarını temizle — cinsiyet bazlı yenileri oluşturulacak
+      return tx.table('numuneCounter').toCollection().delete();
     });
   }
 }
@@ -120,6 +148,163 @@ export async function setOrderCounter(newSeq: number): Promise<void> {
     await db.orderCounter.update(counter.id!, { lastSeq: newSeq });
   } else {
     await db.orderCounter.add({ year: currentYear, lastSeq: newSeq });
+  }
+}
+
+// ============================================
+// NUMUNE NUMARASI SAYAÇ FONKSİYONLARI
+// ============================================
+// Format: [GRUP_KODU][YIL_SON_HANE][HARF][SAYI]
+// Örnek: 16A0, 26B3, 36C9
+// Sıra ilerleyişi: A0→A1→...→A9→B0→B1→...→Z9
+// Harfler: A-Z (İngilizce alfabe)
+// Rakamlar: 0-9
+// Her grup için kapasite: 26 × 10 = 260
+// ============================================
+
+/**
+ * Bir sonraki numune sırasını hesapla
+ * "" → A0 (ilk numune), A9 → B0, Z9 → null (kapasite dolu)
+ */
+function nextSira(current: string): string | null {
+  // Boş veya geçersiz → ilk numune A0
+  if (!current || !/^[A-Z]\d$/.test(current)) {
+    return 'A0';
+  }
+  // Z9 ise kapasite dolu — wrap-around yapmıyoruz
+  if (current === 'Z9') {
+    return null;
+  }
+  let harf = current.charAt(0);
+  let sayi = parseInt(current.slice(1), 10);
+  sayi++;
+  if (sayi > 9) {
+    sayi = 0;
+    harf = String.fromCharCode(harf.charCodeAt(0) + 1);
+  }
+  return `${harf}${sayi}`;
+}
+
+/**
+ * Sıra stringini sayısal index'e çevir (çakışma kontrolü için)
+ * "" → -1 (henüz kullanılmadı)
+ * A0=0, A1=1, ... A9=9, B0=10, B1=11, ... Z9=259
+ */
+function siraToIndex(sira: string): number {
+  if (!sira || !/^[A-Z]\d$/.test(sira)) return -1;
+  const harf = sira.charAt(0);
+  const sayi = parseInt(sira.slice(1), 10);
+  return (harf.charCodeAt(0) - 65) * 10 + sayi;
+}
+
+/** Maksimum sıra sayısı: 26 harf × 10 rakam = 260 (A0'dan Z9'a) */
+const MAX_SIRA_COUNT = 260;
+
+/**
+ * Numune numarası üret (önizleme — sayacı ilerletmez)
+ * cinsiyetKodu: "0"-"9"
+ * Dönen format: [grupKodu][yılSonHane][harf][sayı] → ör. "16A0"
+ *
+ * Her grup kodu kendi bağımsız sıra sayacına sahiptir.
+ * Yıl değişince her grup A0'dan yeniden başlar.
+ * NOT: Bu fonksiyon sayacı güncellemez. Kayıt sırasında
+ * commitNumuneSira() çağrılarak sayaç kalıcı olarak ilerletilmelidir.
+ */
+export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
+  const currentYear = new Date().getFullYear();
+  const yilHanesi = String(currentYear).slice(-1); // Son hane: 2026 → "6"
+
+  // localStorage'dan göç kontrolü (tek seferlik)
+  const legacySira = localStorage.getItem('oys_numune_sira');
+  if (legacySira) {
+    localStorage.removeItem('oys_numune_sira');
+  }
+
+  // Grup bazlı sayacı al veya oluştur
+  let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
+  if (!counter) {
+    const id = await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: '' });
+    counter = { id: id as number, year: currentYear, cinsiyetKodu, lastSira: '' };
+  }
+
+  // Bir sonraki sırayı hesapla
+  const yeniSira = nextSira(counter.lastSira);
+
+  // Kapasite kontrolü — Z9 sonrası taşma engeli
+  if (yeniSira === null) {
+    throw new Error('KAPASITE_DOLU');
+  }
+
+  // Çakışma kontrolü: mevcut numune listesindeki aynı grup+yıl numaraları
+  const mevcutListe = JSON.parse(localStorage.getItem('oys_numune_listesi') || '[]');
+  const usedSiras = new Set(
+    mevcutListe
+      .map((n: any) => n.numuneNo || n.generalInfo?.numuneNo || '')
+      .filter((no: string) => no.length >= 3 && no.charAt(0) === cinsiyetKodu && no.charAt(1) === yilHanesi)
+      .map((no: string) => no.slice(2)) // Harf+Sayı kısmı
+  );
+
+  let finalSira: string | null = yeniSira;
+  let safety = 0;
+  while (finalSira && usedSiras.has(finalSira) && safety < MAX_SIRA_COUNT) {
+    finalSira = nextSira(finalSira);
+    safety++;
+  }
+
+  // Çakışma atlatma sırasında da kapasite kontrolü
+  if (finalSira === null) {
+    throw new Error('KAPASITE_DOLU');
+  }
+
+  // Sayacı burada güncellemiyoruz — kayıt sırasında commitNumuneSira() çağrılacak
+
+  return `${cinsiyetKodu}${yilHanesi}${finalSira}`;
+}
+
+/**
+ * Numune kaydedildikten sonra sayacı kalıcı olarak ilerlet.
+ * numuneNo: kaydedilen numune numarası (ör. "16A0")
+ * 1. karakterden grup kodu, kalan kısımdan sırayı çıkarıp
+ * ilgili grubun sayacını günceller.
+ */
+export async function commitNumuneSira(numuneNo: string): Promise<void> {
+  if (!numuneNo || numuneNo.length < 3) return;
+  const cinsiyetKodu = numuneNo.charAt(0); // "16A0" → "1"
+  const sira = numuneNo.slice(2); // "16A0" → "A0"
+  // Geçersiz format koruması
+  if (!/^[A-Z]\d$/.test(sira)) return;
+  if (!/^\d$/.test(cinsiyetKodu)) return;
+  const currentYear = new Date().getFullYear();
+  let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
+  if (counter) {
+    // Sadece ileri gidiyorsa güncelle (geri alma engeli)
+    if (siraToIndex(sira) > siraToIndex(counter.lastSira)) {
+      await db.numuneCounter.update(counter.id!, { lastSira: sira });
+    }
+  } else {
+    await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: sira });
+  }
+}
+
+/**
+ * Belirli bir grubun mevcut yıldaki numune sayacını oku
+ */
+export async function getNumuneCounter(cinsiyetKodu: string): Promise<string> {
+  const currentYear = new Date().getFullYear();
+  const counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
+  return counter?.lastSira || '';
+}
+
+/**
+ * Belirli bir grubun mevcut yıldaki numune sayacını elle güncelle
+ */
+export async function setNumuneCounter(cinsiyetKodu: string, newSira: string): Promise<void> {
+  const currentYear = new Date().getFullYear();
+  let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
+  if (counter) {
+    await db.numuneCounter.update(counter.id!, { lastSira: newSira });
+  } else {
+    await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: newSira });
   }
 }
 

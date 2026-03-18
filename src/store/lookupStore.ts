@@ -1,7 +1,7 @@
 // ============================================
 // LOOKUP STORE - Zustand
 // ============================================
-// Bedenler, Tipler, Cinsiyetler için ortak store
+// Bedenler, Tipler, Çorap Grupları için ortak store
 // ============================================
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';

@@ -33,7 +33,7 @@ import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useRenkStore } from '@/store/renkStore';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { getOrderCounter, setOrderCounter } from '@/lib/db';
+import { getOrderCounter, setOrderCounter, getNumuneCounter, setNumuneCounter } from '@/lib/db';
 
 interface SubModule {
   id: string;
@@ -66,6 +66,12 @@ export default function BilgiGirisleri() {
   const [editingSeq, setEditingSeq] = useState(false);
   const [tempSeq, setTempSeq] = useState('');
 
+  // Numune sıra sayacı — grup bazlı
+  const [selectedCinsiyet, setSelectedCinsiyet] = useState<string>('1');
+  const [numuneSira, setNumuneSira] = useState<string>('');
+  const [editingNumuneSira, setEditingNumuneSira] = useState(false);
+  const [tempNumuneSira, setTempNumuneSira] = useState('');
+
   // İlk yüklemede verileri seed et
   useEffect(() => {
     if (musteriler.length === 0) seedMusteriler();
@@ -79,12 +85,29 @@ export default function BilgiGirisleri() {
     if (renkler.length === 0) seedRenk();
     // Sipariş sayacını yükle
     getOrderCounter().then(setOrderSeq);
+    // Numune sayacını yükle (varsayılan cinsiyet: 1 - Erkek)
+    getNumuneCounter('1').then(setNumuneSira);
   }, []);
 
   // Lookup sayılarını hesapla
   const bedenCount = items.filter(i => i.lookupType === 'BEDEN').length;
   const tipCount = items.filter(i => i.lookupType === 'TIP').length;
   const cinsiyetCount = items.filter(i => i.lookupType === 'CINSIYET').length;
+
+  // Numune sıra sayacını kaydet — boş veya [A-Z][0-9] formatında doğrulama
+  const saveNumuneSira = () => {
+    const val = tempNumuneSira;
+    if (val === '' || /^[A-Z]\d$/.test(val)) {
+      setNumuneCounter(selectedCinsiyet, val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
+    }
+  };
+
+  // Cinsiyet değiştiğinde ilgili sayacı yükle
+  const handleCinsiyetChange = (kod: string) => {
+    setSelectedCinsiyet(kod);
+    setEditingNumuneSira(false);
+    getNumuneCounter(kod).then(setNumuneSira);
+  };
 
   const subModules: SubModule[] = [
     {
@@ -117,7 +140,7 @@ export default function BilgiGirisleri() {
     {
       id: 'genel-corap-bilgileri',
       title: 'Genel Çorap Bilgileri',
-      description: 'Bedenler, Tipler ve Cinsiyetler listelerini yönetin. Sipariş ve üretimde kullanılır.',
+      description: 'Bedenler, Tipler ve Çorap Gruplarını yönetin. Sipariş ve üretimde kullanılır.',
       icon: Footprints,
       route: '/module/1/genel-corap-bilgileri',
       color: 'bg-teal-500',
@@ -260,6 +283,74 @@ export default function BilgiGirisleri() {
                       <span className="text-2xl font-bold text-amber-900">{String(orderSeq).padStart(4, '0')}</span>
                       <Button size="sm" variant="ghost" onClick={() => { setTempSeq(String(orderSeq)); setEditingSeq(true); }} title="Düzenle">
                         <Edit3 className="w-4 h-4 text-amber-600" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Son Numune Sıra No — Çorap Grubu Bazlı */}
+        <div className="mb-8">
+          <Card className="bg-indigo-50 border-indigo-200">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Hash className="w-6 h-6 text-indigo-600" />
+                  <div>
+                    <p className="text-sm text-indigo-700 font-medium">Son Numune Sırası ({new Date().getFullYear()})</p>
+                    <p className="text-xs text-indigo-500">Her çorap grubu için ayrı sıra sayacı</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedCinsiyet}
+                    onChange={(e) => handleCinsiyetChange(e.target.value)}
+                    className="h-9 px-2 text-sm border border-indigo-300 rounded-md bg-white text-indigo-900 font-medium"
+                  >
+                    <option value="1">1 - Erkek</option>
+                    <option value="2">2 - Kadın</option>
+                    <option value="3">3 - Çocuk</option>
+                    <option value="4">4 - Bebek</option>
+                    <option value="5">5 - Unisex</option>
+                    <option value="6">6 - Külotlu</option>
+                    <option value="7">7 - Erkek 2</option>
+                    <option value="8">8 - Kadın 2</option>
+                    <option value="9">9 - Bebek-Çocuk 2</option>
+                    <option value="0">0 - Unisex 2</option>
+                  </select>
+                  {editingNumuneSira ? (
+                    <>
+                      <Input
+                        type="text"
+                        maxLength={2}
+                        value={tempNumuneSira}
+                        onChange={(e) => {
+                          // Sadece [A-Z][0-9] formatına izin ver
+                          let val = e.target.value.toUpperCase();
+                          if (val.length === 1) val = val.replace(/[^A-Z]/g, '');
+                          else if (val.length === 2) val = val.charAt(0).replace(/[^A-Z]/g, '') + val.charAt(1).replace(/[^0-9]/g, '');
+                          else val = val.replace(/[^A-Z0-9]/g, '').slice(0, 2);
+                          setTempNumuneSira(val);
+                        }}
+                        className="w-24 h-9 text-center font-bold uppercase"
+                        autoFocus
+                        placeholder="A0"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveNumuneSira();
+                          if (e.key === 'Escape') setEditingNumuneSira(false);
+                        }}
+                      />
+                      <Button size="sm" onClick={saveNumuneSira}>Kaydet</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingNumuneSira(false)}>İptal</Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-bold text-indigo-900">{numuneSira || '-'}</span>
+                      <Button size="sm" variant="ghost" onClick={() => { setTempNumuneSira(numuneSira); setEditingNumuneSira(true); }} title="Düzenle">
+                        <Edit3 className="w-4 h-4 text-indigo-600" />
                       </Button>
                     </>
                   )}

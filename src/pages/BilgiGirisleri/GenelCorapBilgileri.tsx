@@ -1,7 +1,7 @@
 // ============================================
 // GENEL ÇORAP BİLGİLERİ SAYFASI - CRUD
 // ============================================
-// Bedenler, Tipler, Cinsiyetler için tab'lı arayüz
+// Bedenler, Tipler, Çorap Grupları için tab'lı arayüz
 // ============================================
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/common/Header';
@@ -47,7 +47,7 @@ import type { LookupItem, LookupItemFormData, LookupType } from '@/types';
 const LOOKUP_TYPES: { id: LookupType; label: string; labelTekil: string; icon: React.ElementType; description: string }[] = [
   { id: 'BEDEN', label: 'Beden', labelTekil: 'Beden', icon: Ruler, description: 'Çorap beden ölçüleri (35-38, 39-42 vb.)' },
   { id: 'TIP', label: 'Tip', labelTekil: 'Tip', icon: Footprints, description: 'Çorap tipleri (Patik, Kısa, Diz Altı vb.)' },
-  { id: 'CINSIYET', label: 'Cinsiyet', labelTekil: 'Cinsiyet', icon: Users, description: 'Cinsiyet kategorileri (Erkek, Kadın, Unisex vb.)' },
+  { id: 'CINSIYET', label: 'Çorap Grubu', labelTekil: 'Çorap Grubu', icon: Users, description: 'Çorap grubu kategorileri (Erkek, Kadın, Unisex vb.)' },
   { id: 'BIRIM', label: 'Birim', labelTekil: 'Birim', icon: Package, description: 'Sipariş birimleri (Çift, Düzine, Paket vb.)' },
 ];
 

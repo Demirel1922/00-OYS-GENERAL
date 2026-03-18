@@ -50,7 +50,7 @@ export const MODULES: Module[] = [
   {
     id: '1e',
     title: 'Genel Çorap Bilgileri',
-    description: 'Beden, tip ve cinsiyet tanımları',
+    description: 'Beden, tip ve çorap grubu tanımları',
     route: '/module/1/genel-corap-bilgileri',
     parent: '1',
     hasChildren: false,
