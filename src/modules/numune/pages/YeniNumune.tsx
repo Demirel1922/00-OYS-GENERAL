@@ -10,7 +10,7 @@ import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
 import { useLookupStore } from '@/store/lookupStore';
-import { generateNumuneNo } from '@/lib/db';
+import { generateNumuneNo, commitNumuneSira } from '@/lib/db';
 
 interface MeasurementRow {
   id: number;
@@ -423,6 +423,10 @@ export function YeniNumune() {
     if (!validate()) return;
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 500));
+    // Yeni kayıt ise sayacı kalıcı olarak ilerlet
+    if (formData.generalInfo.numuneNo && !isEditMode) {
+      await commitNumuneSira(formData.generalInfo.numuneNo);
+    }
     const yeniNumune = {
       id: isEditMode ? editId : Date.now(),
       numuneNo: formData.generalInfo.numuneNo,
@@ -460,6 +464,10 @@ export function YeniNumune() {
     if (!validate()) return;
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 500));
+    // Yeni kayıt ise sayacı kalıcı olarak ilerlet
+    if (formData.generalInfo.numuneNo && !isEditMode) {
+      await commitNumuneSira(formData.generalInfo.numuneNo);
+    }
     const yeniNumune = {
       id: isEditMode ? editId : Date.now(),
       numuneNo: formData.generalInfo.numuneNo,

@@ -177,9 +177,12 @@ function siraToIndex(sira: string): number {
 const MAX_SIRA_COUNT = 234;
 
 /**
- * Numune numarası üret
+ * Numune numarası üret (önizleme — sayacı ilerletmez)
  * cinsiyetKodu: "1"-"6"
  * Dönen format: [cinsiyetKodu][yılSonHane][harf][sayı] → ör. "16A1"
+ *
+ * NOT: Bu fonksiyon sayacı güncellemez. Kayıt sırasında
+ * commitNumuneSira() çağrılarak sayaç kalıcı olarak ilerletilmelidir.
  */
 export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
   const currentYear = new Date().getFullYear();
@@ -228,10 +231,29 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
     safety++;
   }
 
-  // Sayacı güncelle
-  await db.numuneCounter.update(counter.id!, { lastSira: finalSira });
+  // Sayacı burada güncellemiyoruz — kayıt sırasında commitNumuneSira() çağrılacak
 
   return `${cinsiyetKodu}${yilHanesi}${finalSira}`;
+}
+
+/**
+ * Numune kaydedildikten sonra sayacı kalıcı olarak ilerlet.
+ * numuneNo: kaydedilen numune numarası (ör. "16A1")
+ * Sıra kısmını (ör. "A1") çıkarıp sayacı günceller.
+ */
+export async function commitNumuneSira(numuneNo: string): Promise<void> {
+  if (!numuneNo || numuneNo.length < 3) return;
+  const sira = numuneNo.slice(2); // "16A1" → "A1"
+  const currentYear = new Date().getFullYear();
+  let counter = await db.numuneCounter.where('year').equals(currentYear).first();
+  if (counter) {
+    // Sadece ileri gidiyorsa güncelle (geri alma engeli)
+    if (siraToIndex(sira) > siraToIndex(counter.lastSira)) {
+      await db.numuneCounter.update(counter.id!, { lastSira: sira });
+    }
+  } else {
+    await db.numuneCounter.add({ year: currentYear, lastSira: sira });
+  }
 }
 
 /**
