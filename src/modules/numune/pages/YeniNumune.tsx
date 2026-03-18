@@ -10,6 +10,7 @@ import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
 import { useLookupStore } from '@/store/lookupStore';
+import { generateNumuneNo } from '@/lib/db';
 
 interface MeasurementRow {
   id: number;
@@ -105,26 +106,6 @@ const CORAP_DOKUSU_OPTIONS = [
 
 const YIKAMA_OPTIONS = ['Var', 'Yok', 'Hafif', 'Sert'];
 const BIRIM_OPTIONS = ['Çift', 'Düzine', 'Adet'];
-
-const generateNumuneNo = (cinsiyetKodu: string): string => {
-  const yilHanesi = new Date().getFullYear().toString().slice(-1);
-  const storedSira = localStorage.getItem('oys_numune_sira') || 'A0';
-  let harf = storedSira.charAt(0);
-  let sayi = parseInt(storedSira.slice(1));
-  sayi++;
-  if (sayi > 9) {
-    sayi = 1;
-    harf = String.fromCharCode(harf.charCodeAt(0) + 1);
-    if (harf > 'Z') harf = 'A';
-  }
-  const yeniSira = `${harf}${sayi}`;
-  return `${cinsiyetKodu}${yilHanesi}${yeniSira}`;
-};
-
-const saveSira = (numuneNo: string) => {
-  const sira = numuneNo.slice(2);
-  localStorage.setItem('oys_numune_sira', sira);
-};
 
 const getFixedYarnRows = (): YarnRow[] => [
   { id: 1, kullanimYeri: 'LASTİK', detay: 'Lastik Elastiği', denye: '', cins: '', renkKodu: '', renk: '', tedarikci: '', not: '', isFixed: true },
@@ -282,11 +263,12 @@ export function YeniNumune() {
 
   useEffect(() => {
     if (formData.generalInfo.cinsiyet && !isEditMode) {
-      const newNumuneNo = generateNumuneNo(formData.generalInfo.cinsiyet);
-      setFormData(prev => ({
-        ...prev,
-        generalInfo: { ...prev.generalInfo, numuneNo: newNumuneNo }
-      }));
+      generateNumuneNo(formData.generalInfo.cinsiyet).then(newNumuneNo => {
+        setFormData(prev => ({
+          ...prev,
+          generalInfo: { ...prev.generalInfo, numuneNo: newNumuneNo }
+        }));
+      });
     }
   }, [formData.generalInfo.cinsiyet, isEditMode]);
 
@@ -441,9 +423,6 @@ export function YeniNumune() {
     if (!validate()) return;
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 500));
-    if (formData.generalInfo.numuneNo && !isEditMode) {
-      saveSira(formData.generalInfo.numuneNo);
-    }
     const yeniNumune = {
       id: isEditMode ? editId : Date.now(),
       numuneNo: formData.generalInfo.numuneNo,
@@ -481,9 +460,6 @@ export function YeniNumune() {
     if (!validate()) return;
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 500));
-    if (formData.generalInfo.numuneNo && !isEditMode) {
-      saveSira(formData.generalInfo.numuneNo);
-    }
     const yeniNumune = {
       id: isEditMode ? editId : Date.now(),
       numuneNo: formData.generalInfo.numuneNo,

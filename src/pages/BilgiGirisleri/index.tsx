@@ -33,7 +33,7 @@ import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useRenkStore } from '@/store/renkStore';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { getOrderCounter, setOrderCounter } from '@/lib/db';
+import { getOrderCounter, setOrderCounter, getNumuneCounter, setNumuneCounter } from '@/lib/db';
 
 interface SubModule {
   id: string;
@@ -66,6 +66,11 @@ export default function BilgiGirisleri() {
   const [editingSeq, setEditingSeq] = useState(false);
   const [tempSeq, setTempSeq] = useState('');
 
+  // Numune sıra sayacı
+  const [numuneSira, setNumuneSira] = useState<string>('A0');
+  const [editingNumuneSira, setEditingNumuneSira] = useState(false);
+  const [tempNumuneSira, setTempNumuneSira] = useState('');
+
   // İlk yüklemede verileri seed et
   useEffect(() => {
     if (musteriler.length === 0) seedMusteriler();
@@ -79,6 +84,8 @@ export default function BilgiGirisleri() {
     if (renkler.length === 0) seedRenk();
     // Sipariş sayacını yükle
     getOrderCounter().then(setOrderSeq);
+    // Numune sayacını yükle
+    getNumuneCounter().then(setNumuneSira);
   }, []);
 
   // Lookup sayılarını hesapla
@@ -260,6 +267,68 @@ export default function BilgiGirisleri() {
                       <span className="text-2xl font-bold text-amber-900">{String(orderSeq).padStart(4, '0')}</span>
                       <Button size="sm" variant="ghost" onClick={() => { setTempSeq(String(orderSeq)); setEditingSeq(true); }} title="Düzenle">
                         <Edit3 className="w-4 h-4 text-amber-600" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Son Numune Sıra No */}
+        <div className="mb-8">
+          <Card className="bg-indigo-50 border-indigo-200">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Hash className="w-6 h-6 text-indigo-600" />
+                  <div>
+                    <p className="text-sm text-indigo-700 font-medium">Son Numune Sırası ({new Date().getFullYear()})</p>
+                    <p className="text-xs text-indigo-500">Yeni numune bu sıradan sonraki ilk boş sırayı alır</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {editingNumuneSira ? (
+                    <>
+                      <Input
+                        type="text"
+                        maxLength={3}
+                        value={tempNumuneSira}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                          setTempNumuneSira(val);
+                        }}
+                        className="w-24 h-9 text-center font-bold uppercase"
+                        autoFocus
+                        placeholder="A0"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = tempNumuneSira || 'A0';
+                            const harf = val.charAt(0);
+                            const sayi = val.slice(1);
+                            if (harf >= 'A' && harf <= 'Z' && /^\d$/.test(sayi)) {
+                              setNumuneCounter(val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
+                            }
+                          }
+                          if (e.key === 'Escape') setEditingNumuneSira(false);
+                        }}
+                      />
+                      <Button size="sm" onClick={() => {
+                        const val = tempNumuneSira || 'A0';
+                        const harf = val.charAt(0);
+                        const sayi = val.slice(1);
+                        if (harf >= 'A' && harf <= 'Z' && /^\d$/.test(sayi)) {
+                          setNumuneCounter(val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
+                        }
+                      }}>Kaydet</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingNumuneSira(false)}>İptal</Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-bold text-indigo-900">{numuneSira}</span>
+                      <Button size="sm" variant="ghost" onClick={() => { setTempNumuneSira(numuneSira); setEditingNumuneSira(true); }} title="Düzenle">
+                        <Edit3 className="w-4 h-4 text-indigo-600" />
                       </Button>
                     </>
                   )}
