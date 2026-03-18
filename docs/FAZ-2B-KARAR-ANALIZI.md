@@ -48,36 +48,43 @@ Teknik meta alanlar otomatik atanacak: `kaynak = 'numune'`, `numuneId = numune.i
 
 ## 4. Manuel Kayıt Çakışma Kararı
 
-### Senaryo A: `numuneNo` eşleşiyorsa
-**Karar: Yeni kayıt oluşturMA. Mevcut kaydın `numuneId` ve `kaynak` alanlarını güncelle.**
+> **⚠️ DERİN İNCELEME SONRASI GÜNCELLENDİ** — Senaryo B düzeltildi, çakışma kontrol sırası netleştirildi.
 
-Kullanıcı manuel olarak aynı `numuneNo` ile artikel açmışsa, bu zaten aynı ürün tanımıdır. İkinci kayıt oluşturmak duplicate yaratır. Mevcut kayda `numuneId` bağla ve `kaynak`'ı `'numune'` yap.
+### Çakışma Kontrol Sırası (addArtikelFromNumune içinde)
+
+1. **numuneId eşleşmesi** → varsa işlem atlanır (aynı numune zaten aktarılmış)
+2. **numuneNo eşleşmesi** → varsa mevcut kaydın sadece meta alanları güncellenir (numuneId, kaynak='numune'). İş alanları DEĞİŞMEZ.
+3. **musteriKodu + musteriArtikelNo eşleşmesi** (mevcut kaydın numuneNo'su boşsa) → mevcut kaydın meta alanları güncellenir (numuneId, numuneNo, kaynak='numune'). İş alanları DEĞİŞMEZ.
+4. **Hiçbir eşleşme yoksa** → yeni Artikel kaydı oluşturulur.
+
+### Senaryo A: `numuneNo` eşleşiyorsa
+**Karar: Bağla — sadece meta alanları güncelle.**
+
+Mevcut kaydın `numuneId` ve `kaynak` alanları güncellenir. İş alanları (musteriKodu, musteriArtikelNo, urunTanimi) güncellenmez. Snapshot ilkesi korunur.
 
 ### Senaryo B: `numuneNo` boş ama `musteriKodu + musteriArtikelNo` eşleşiyorsa
-**Karar: Yeni kayıt oluştur.**
+**Karar: ~~Yeni kayıt oluştur.~~ → Bağla — sadece meta alanları güncelle.**
 
-Manuel kayıtta `numuneNo` boş bırakılmış demek kullanıcı numune referansı olmadan giriş yapmıştır. Numuneden gelen kayıt ise `numuneNo` dolu olacaktır. Bunlar farklı giriş kanallarından gelen potansiyel olarak aynı üründür ama kesin eşleşme garanti edilemez. Yeni kayıt oluştur; kullanıcı manuel birleştirme yapabilir.
+Manuel kayıt bir ön tanımdır. Numune onayı geldiğinde bu ön tanım resmi referans verisine dönüşür. İki ayrı kayıt tutmak duplicate yaratır ve kullanıcıyı karıştırır. Mevcut kaydın numuneId, numuneNo ve kaynak alanları güncellenir. İş alanları DEĞİŞMEZ.
 
 ### Senaryo C: Hiçbir eşleşme yoksa
 **Karar: Yeni kayıt oluştur.**
 
 Standart `create` davranışı. Herhangi bir eşleşme olmadığında doğrudan yeni Artikel kaydı oluşturulur.
 
-### Alt Karar: `musteriKodu + musteriArtikelNo` fiili unique aday mı?
-**Karar: Hayır, kesin unique anahtar olarak KULLANILMAMALI.**
-
-Aynı müşteri aynı artikel numarasıyla farklı varyasyonlarda (farklı numune süreçleri) ürün tanımlayabilir. `musteriKodu + musteriArtikelNo` mevcut FAZ 2A'da sadece `numuneNo` yokken yedek duplicate kontrolü olarak kullanılıyor — bu uygulamayı korumak yeterlidir. Numuneden gelen aktarımda `numuneNo` her zaman dolu olacağından birincil kontrol daima `numuneNo` üzerinden yapılacaktır.
-
 ---
 
 ## 5. Duplicate Önleme Kararı
 
-**Karar: `numuneId` bazlı tekil kontrol.**
+> **⚠️ DERİN İNCELEME SONRASI GÜNCELLENDİ** — 3 katmanlı kontrol olarak netleştirildi.
 
-- Artikel store'da yeni kayıt oluşturmadan önce `artikeller.find(a => a.numuneId === numune.id)` kontrolü yapılacak.
-- Eşleşme varsa → işlem atlanır, bilgi mesajı gösterilir: _"Bu numune için artikel tanımı zaten mevcut."_
-- **Bu, mevcut `handleUretimHazirligaGonder` pattern'inin birebir aynısıdır** (satır 146-150: `mevcutKayitlar.find((k: any) => k.numuneId === id)`).
-- `numuneId` kontrolü `numuneNo` kontrolünden daha güvenlidir çünkü `numuneId` sistemsel/değiştirilemez, `numuneNo` ise kullanıcı tarafından düzenlenebilir.
+**Karar: 3 katmanlı store pre-check.** Sadece store seviyesi yeterli, Dexie/veri katmanı unique constraint gerekmez.
+
+Kontrol sırası (`addArtikelFromNumune` içinde):
+1. `numuneId` kontrolü: `artikeller.some(a => a.numuneId === numuneIdStr)` → varsa atla
+2. `numuneNo` kontrolü: `artikeller.some(a => normalizeForCompare(a.numuneNo) === normalizedNumuneNo)` → varsa bağla (meta güncelle)
+3. `musteriKodu + musteriArtikelNo` kontrolü: eşleşen kaydın numuneNo'su boşsa → bağla (meta güncelle)
+4. Hiçbir eşleşme yoksa → create
 
 ---
 
@@ -138,10 +145,16 @@ Aynı müşteri aynı artikel numarasıyla farklı varyasyonlarda (farklı numun
 
 ---
 
-## 11. Kod Başlamadan Önce Netleşmesi Gereken Son 3 Karar
+## 11. ~~Kod Başlamadan Önce Netleşmesi Gereken Son 3 Karar~~ KAPATILDI
 
-1. **Tetikleme yeri:** `handleSaveAndApprove` içinde otomatik mi, yoksa NumuneTaleplerPage'de ayrı buton/menü aksiyonu olarak manuel mi? Öneri: otomatik (`handleSaveAndApprove` içinde). Ama iş sahibinin onayı gerekir.
+> **⚠️ DERİN İNCELEME SONRASI GÜNCELLENDİ** — Tüm açık kararlar kapatılmıştır.
 
-2. **Düzenleme modu davranışı:** Kullanıcı mevcut bir 'Beklemede' numune kaydını düzenleyip tekrar "Kaydet & Onayla" yaparsa (`isEditMode = true`), artikel kaydı güncellenecek mi yoksa ilk oluşturmadan sonra sabit mi kalacak? Öneri: ilk oluşturmadan sonra sabit (snapshot ilkesiyle tutarlı), `numuneId` duplicate kontrolü ikinci oluşturmayı zaten engelleyecek.
+1. **Tetikleme yeri: KAPATILDI → Otomatik.** `handleSaveAndApprove` içinde çalışacak. Manuel buton gereksiz — kullanıcı unutma riski yaratır.
 
-3. **Alan eşleştirme son doğrulaması:** Numune formundaki `corapTanimi` → Artikel'deki `urunTanimi` eşleştirmesi doğru mu? `corapTanimi` boş olabilir mi? Boşsa artikel kaydı oluşturulmalı mı yoksa atlanmalı mı? Öneri: `corapTanimi` boşsa bile oluştur (diğer 3 alan yeterli tanımlayıcı), kullanıcı sonra Artikel Tanımları ekranından düzenleyebilir.
+2. **Düzenleme modu davranışı: KAPATILDI → Her çağrıda çalışır, numuneId kontrolü ikinci oluşturmayı engeller.** Ek kod gerekmez. Duplicate kontrol mekanizması bu senaryoyu doğal olarak yönetir.
+
+3. **corapTanimi boş davranışı: KAPATILDI → Boş olsa bile artikel oluşturulur.** urunTanimi="" olarak kaydedilir. numuneNo yeterli tanımlayıcıdır. Kullanıcı Artikel Tanımları ekranından düzenleyebilir.
+
+**Ek: Tip uyumsuzluğu tespiti →** numune.id (number/Date.now()) → Artikel.numuneId (string) dönüşümü `.toString()` ile çağıran tarafta yapılacak.
+
+**Sonuç: Koda geçilebilir. Bloklayıcı madde kalmamıştır.** Detaylı derin inceleme için bkz. `docs/FAZ-2B-DERIN-INCELEME.md`.
