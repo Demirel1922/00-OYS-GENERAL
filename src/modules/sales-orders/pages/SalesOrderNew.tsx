@@ -482,7 +482,7 @@ export function SalesOrderNew() {
                           <div className="flex items-center gap-1 text-green-700 text-xs font-medium shrink-0">
                             <Check className="w-3 h-3" /> Eklendi
                           </div>
-                          <div className="flex-1 grid grid-cols-2 md:grid-cols-10 gap-2 text-sm">
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-11 gap-2 text-sm">
                             <div><span className="text-gray-500 text-xs block">Artikel No</span><span className="font-medium font-mono">{watchedLine?.artikel_no || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Ürün Tanımı</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{watchedLine?.gender || '-'}</span></div>
@@ -491,6 +491,7 @@ export function SalesOrderNew() {
                             <div><span className="text-gray-500 text-xs block">Beden</span><span>{watchedLine?.size || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Miktar</span><span className="font-medium">{formatQuantity(watchedLine?.quantity ?? 0)}</span></div>
                             <div><span className="text-gray-500 text-xs block">Birim</span><span>{getBirimAdi(watchedLine?.price_unit)}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Toplam Çift</span><span className="font-medium">{formatQuantity(watchedLine?.line_total_pairs ?? 0)}</span></div>
                             <div><span className="text-gray-500 text-xs block">Birim Fiyat</span><span>{watchedLine?.unit_price || '0'} {lineCurrency}</span></div>
                             <div><span className="text-gray-500 text-xs block">Tutar</span><span className="font-bold">{formatMoney2(watchedLine?.line_amount, lineCurrency)}</span></div>
                           </div>
