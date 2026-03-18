@@ -108,6 +108,31 @@ export interface LookupItem {
 }
 
 // ============================================
+// ARTİKEL TANIMLARI
+// ============================================
+
+export interface Artikel {
+  id: string;
+  numuneNo: string;
+  musteriKodu: string;
+  musteriArtikelNo: string;
+  urunTanimi: string;
+  kaynak: 'manuel' | 'numune';
+  durum: 'AKTIF' | 'PASIF';
+  numuneId: string | null;
+  olusturmaTarihi: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ArtikelFormData {
+  numuneNo: string;
+  musteriKodu: string;
+  musteriArtikelNo: string;
+  urunTanimi: string;
+}
+
+// ============================================
 // FORM TİPLERİ
 // ============================================
 
