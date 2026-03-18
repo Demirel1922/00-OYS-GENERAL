@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, FileText, Mail, Eye } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface MeasurementRow {
   bedenler?: string;
@@ -114,18 +116,237 @@ export function NumuneDetayModal({ isOpen, onClose, numuneId }: NumuneDetayModal
 
   if (!isOpen || !data) return null;
 
+  const generatePDF = () => {
+    // Türkçe karakter normalize fonksiyonu (jsPDF Helvetica UTF-8 desteklemez)
+    const tr = (s?: string | null): string => {
+      if (!s) return '-';
+      return s
+        .replace(/ş/g, 's').replace(/Ş/g, 'S')
+        .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+        .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+        .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+        .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+        .replace(/ı/g, 'i').replace(/İ/g, 'I');
+    };
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const PW = 210; // A4 genislik
+    const ML = 8;   // sol margin
+    const MR = 8;   // sag margin
+    const CW = PW - ML - MR; // kullanilabilir genislik = 194mm
+
+    // ─── BAŞLIK ─────────────────────────────────────────────
+    doc.setFillColor(30, 64, 175);
+    doc.rect(ML, 6, CW, 10, 'F');
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('NUMUNE TALEP FORMU / SAMPLE REQUEST FORM', PW / 2, 13, { align: 'center' });
+
+    // Numune no + tarih sağ üst
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(255, 255, 255);
+    doc.text(`No: ${tr(data.numuneNo)}   Tarih: ${new Date().toLocaleDateString('tr-TR')}`, PW - MR, 13, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    // ─── BÖLÜM 1: GENEL BİLGİLER (2 sütunlu, sol + sağ) ────
+    let y = 20;
+    const colLabel = 28;  // etiket genislik sol
+    const colVal   = 42;  // deger genislik sol
+    const gap      = 5;   // iki sutun arasi
+    const colLabel2 = 28; // etiket genislik sag
+    const colVal2   = 43; // deger genislik sag
+    const leftX  = ML;
+    const rightX = ML + colLabel + colVal + gap;
+    const rowH   = 6;
+
+    // Bölüm başlığı
+    doc.setFillColor(220, 230, 255);
+    doc.rect(ML, y, CW, 5.5, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 64, 175);
+    doc.text('GENEL BILGILER / GENERAL INFORMATION', ML + 2, y + 3.8);
+    doc.setTextColor(0);
+    y += 6.5;
+
+    const drawRow = (lx: number, label: string, value: string, lw: number, vw: number, rowY: number) => {
+      doc.setFillColor(245, 247, 250);
+      doc.rect(lx, rowY, lw, rowH - 0.5, 'F');
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(lx, rowY, lw, rowH - 0.5);
+      doc.rect(lx + lw, rowY, vw, rowH - 0.5);
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, lx + 1.5, rowY + 3.8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, lx + lw + 1.5, rowY + 3.8);
+    };
+
+    // Sol sütun alanları
+    const leftRows = [
+      ['Musteri Kodu',    tr(data.musteriKodu || data.musteri)],
+      ['Artikel No',      tr(data.musteriArtikelKodu || data.musteriArtikelNo)],
+      ['Marka',           tr(data.musteriMarkasi)],
+      ['Cinsiyet',        tr(data.cinsiyet)],
+      ['Corap Tipi',      tr(data.corapTipi)],
+      ['Corap Dokusu',    tr(data.corapDokusu)],
+      ['Igne / Kovan',    `${tr(data.igneSayisi)} / ${tr(data.kovanCapi)}`],
+      ['Corap Tanimi',    tr(data.corapTanimi)],
+      ['Durum',           tr(data.durum)],
+      ['Gonderim',        tr(data.gonderim || data.gonderimSekli)],
+    ];
+
+    // Sağ sütun alanları
+    const rightRows = [
+      ['Numune Tipi',     tr(data.numuneTipi)],
+      ['Sebep',           tr(data.numuneninSebebi)],
+      ['Yikama',          tr(data.yikama)],
+      ['Forma Bilgisi',   tr(data.formaBilgisi)],
+      ['Forma Sekli',     tr(data.formaSekli)],
+      ['Olcu Sekli',      tr(data.olcuSekli)],
+      ['Hedef Tarih',     tr(data.hedefTarih || data.termin)],
+      ['Desene Verilis',  tr(data.deseneVerilisTarihi)],
+      ['',                ''],
+      ['',                ''],
+    ];
+
+    const maxRows = Math.max(leftRows.length, rightRows.length);
+    for (let i = 0; i < maxRows; i++) {
+      const rowY = y + i * rowH;
+      if (leftRows[i]  && leftRows[i][0])  drawRow(leftX,  leftRows[i][0],  leftRows[i][1],  colLabel,  colVal,  rowY);
+      if (rightRows[i] && rightRows[i][0]) drawRow(rightX, rightRows[i][0], rightRows[i][1], colLabel2, colVal2, rowY);
+    }
+    y += maxRows * rowH + 4;
+
+    // ─── BÖLÜM 2: ÖLÇÜLER ───────────────────────────────────
+    const olculerData = data.measurements || data.olculer || [];
+    doc.setFillColor(220, 230, 255);
+    doc.rect(ML, y, CW, 5.5, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 64, 175);
+    doc.text('OLCULER / MEASUREMENTS', ML + 2, y + 3.8);
+    doc.setTextColor(0);
+    y += 6.5;
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: ML, right: MR },
+      head: [[
+        'Beden', 'Renk', 'Mkt', 'Brm',
+        'Lst.Eni', 'Lst.Yuk', 'Kc.Eni', 'Ay.Eni',
+        'Kc.Boy', 'Tb.Boy', 'Lst.St', 'Kc/Ay.St', 'Tp.St', 'Bord'
+      ]],
+      body: olculerData.length > 0 ? olculerData.map(o => [
+        tr(o.bedenler || o.beden),
+        tr(o.renk),
+        String(o.miktar || 0),
+        tr(o.birim) || 'Cift',
+        tr(o.lastikEni),
+        tr(o.lastikYuksekligi),
+        tr(o.koncEni),
+        tr(o.ayakEni),
+        tr(o.koncBoyu),
+        tr(o.tabanBoyu),
+        tr(o.lastikStreci),
+        tr(o.koncStreciAyakStreci),
+        tr(o.topukStreci),
+        tr(o.bord),
+      ]) : [['Veri yok', '', '', '', '', '', '', '', '', '', '', '', '', '']],
+      theme: 'grid',
+      headStyles: { fillColor: [34, 139, 87], fontStyle: 'bold', fontSize: 6.5, halign: 'center', cellPadding: 1.5 },
+      bodyStyles: { fontSize: 6.5, halign: 'center', cellPadding: 1.5 },
+      pageBreak: 'avoid',
+    });
+
+    y = (doc as any).lastAutoTable?.finalY + 4;
+
+    // ─── BÖLÜM 3: İPLİK BİLGİLERİ ──────────────────────────
+    const iplikler = data.yarnInfo || [];
+    doc.setFillColor(220, 230, 255);
+    doc.rect(ML, y, CW, 5.5, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 64, 175);
+    doc.text('IPLIK BILGILERI / YARN INFORMATION', ML + 2, y + 3.8);
+    doc.setTextColor(0);
+    y += 6.5;
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: ML, right: MR },
+      head: [['Kullanim Yeri', 'Detay', 'Denye', 'Cins', 'Renk Kodu', 'Renk', 'Tedarikci', 'Not']],
+      body: iplikler.length > 0 ? iplikler.map(i => [
+        tr(i.kullanimYeri),
+        tr(i.detay),
+        tr(i.denye),
+        tr(i.cins),
+        tr(i.renkKodu),
+        tr(i.renk),
+        tr(i.tedarikci),
+        tr(i.not),
+      ]) : [['Veri yok', '', '', '', '', '', '', '']],
+      theme: 'grid',
+      headStyles: { fillColor: [109, 40, 217], fontStyle: 'bold', fontSize: 6.5, cellPadding: 1.5 },
+      bodyStyles: { fontSize: 6.5, cellPadding: 1.5 },
+      columnStyles: {
+        0: { cellWidth: 22, fontStyle: 'bold' },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 18 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 26 },
+        7: { cellWidth: 38 },
+      },
+      pageBreak: 'avoid',
+    });
+
+    // ─── İMZA SATIRLARI ─────────────────────────────────────
+    const sigY = (doc as any).lastAutoTable?.finalY + 5;
+    const sigLabels = [
+      'Desene Teslim Eden',
+      'Iplik Kontrol',
+      'Desende Teslim Alan',
+      'Kalite Kontrol',
+      'Ihracat Teslim Alan',
+    ];
+    const sigW = CW / sigLabels.length;
+    doc.setDrawColor(180, 180, 180);
+    sigLabels.forEach((lbl, i) => {
+      const sx = ML + i * sigW;
+      doc.setFillColor(245, 247, 250);
+      doc.rect(sx, sigY, sigW - 1, 5, 'F');
+      doc.rect(sx, sigY, sigW - 1, 5);
+      doc.setFontSize(5.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80);
+      doc.text(tr(lbl), sx + (sigW - 1) / 2, sigY + 3.3, { align: 'center' });
+      // İmza alanı
+      doc.setFillColor(255, 255, 255);
+      doc.rect(sx, sigY + 5, sigW - 1, 10);
+      doc.setFontSize(5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(160);
+      doc.text('Tarih: ___/___/______', sx + 1, sigY + 13.5);
+    });
+    doc.setTextColor(0);
+
+    return doc;
+  };
+
   const viewPDF = () => {
-    // TODO: PDF özelliği şu an devre dışı — jspdf dependency eklenmediği için.
-    // İleride @react-pdf/renderer ile uyarlanacak.
-    console.warn('PDF export özelliği henüz aktif değildir.');
-    alert('PDF export özelliği henüz aktif değildir. Bu özellik ileride eklenecektir.');
+    const doc = generatePDF();
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
   };
 
   const downloadPDF = () => {
-    // TODO: PDF özelliği şu an devre dışı — jspdf dependency eklenmediği için.
-    // İleride @react-pdf/renderer ile uyarlanacak.
-    console.warn('PDF export özelliği henüz aktif değildir.');
-    alert('PDF export özelliği henüz aktif değildir. Bu özellik ileride eklenecektir.');
+    const doc = generatePDF();
+    doc.save(`Sample_${data.numuneNo}.pdf`);
   };
 
   const handleEmail = () => {

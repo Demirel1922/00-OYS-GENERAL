@@ -485,9 +485,8 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
   }, [tedarikciler, tedarikciKategorileri]);
 
   const handleUrunPdfView = async () => {
-    // TODO: PDF özelliği şu an devre dışı — jspdf dependency eklenmediği için.
-    // İleride @react-pdf/renderer ile uyarlanacak.
-    alert('PDF export özelliği henüz aktif değildir.');
+    const { generateUrunKartiPdf } = await import('../../../utils/urunKartiPdf');
+    generateUrunKartiPdf(kayit);
   };
 
   return (
@@ -900,9 +899,8 @@ function MakinaKartiTab({ kayit }: { kayit: UretimHazirlikKaydi }) {
   const k = kayit.urunKarti;
 
   const handlePdfView = async () => {
-    // TODO: PDF özelliği şu an devre dışı — jspdf dependency eklenmediği için.
-    // İleride @react-pdf/renderer ile uyarlanacak.
-    alert('PDF export özelliği henüz aktif değildir.');
+    const { generateMakinaKartiPdf } = await import('../../../utils/makinaKartiPdf');
+    generateMakinaKartiPdf(kayit);
   };
 
   return (
