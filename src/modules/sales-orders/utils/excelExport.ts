@@ -85,7 +85,7 @@ export async function exportOrderToExcel(order: SalesOrder): Promise<void> {
   worksheet.addRow(['Toplam Tutar', formatMoneyRaw(order.total_amount)]);
   worksheet.addRow([]);
 
-  const headers = ['Ürün', 'Cinsiyet', 'Renk', 'Beden', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam Çift', 'Tutar'];
+  const headers = ['Ürün', 'Çorap Grubu', 'Renk', 'Beden', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam Çift', 'Tutar'];
   worksheet.addRow(headers);
   
   const headerRow = worksheet.getRow(worksheet.rowCount);
