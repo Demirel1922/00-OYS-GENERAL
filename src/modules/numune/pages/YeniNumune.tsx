@@ -20,6 +20,7 @@ import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
 import { useLookupStore } from '@/store/lookupStore';
+import { useArtikelStore } from '@/store/artikelStore';
 import { generateNumuneNo, commitNumuneSira } from '@/lib/db';
 
 interface MeasurementRow {
@@ -206,6 +207,9 @@ export function YeniNumune() {
   const { kalinliklar, seedData: seedKalinlik, getBirlesikGosterim } = useKalinlikStore();
   const { tedarikciler, seedData: seedTedarikci } = useTedarikciStore();
   const { kategoriler: tedarikciKategorileri, seedData: seedTedarikciKategori } = useTedarikciKategoriStore();
+
+  // FAZ 2B: Artikel store entegrasyonu
+  const { addArtikelFromNumune } = useArtikelStore();
 
   useEffect(() => {
     if (iplikDetaylar.length === 0) seedIplikDetay();
@@ -534,6 +538,24 @@ export function YeniNumune() {
     localStorage.removeItem('oys_numune_yeniFormData');
     localStorage.removeItem('oys_numune_yeniLastSaved');
     showToast(isEditMode ? 'Güncellendi ve Onaylandı' : 'Kaydedildi ve Onaylandı', 'success');
+
+    // FAZ 2B: Numune onayı sonrası otomatik artikel oluşturma / bağlama
+    try {
+      const numuneId = (yeniNumune.id as number).toString();
+      const result = addArtikelFromNumune({
+        numuneId,
+        numuneNo: formData.generalInfo.numuneNo,
+        musteriKodu: formData.generalInfo.musteriKodu,
+        musteriArtikelNo: formData.generalInfo.musteriArtikelKodu || '',
+        urunTanimi: formData.generalInfo.corapTanimi || '',
+      });
+      if (!result.success) {
+        showToast('Numune onaylandı ancak artikel tanımı oluşturulamadı. Lütfen Artikel Tanımları ekranını kontrol edin.', 'error');
+      }
+    } catch {
+      showToast('Numune onaylandı ancak artikel tanımı oluşturulamadı. Lütfen Artikel Tanımları ekranını kontrol edin.', 'error');
+    }
+
     setIsSaving(false);
     navigate('/module/2/talepler', { state: { refresh: true, timestamp: Date.now() } });
   };
