@@ -60,10 +60,13 @@ export default function ArtikelTanimlari() {
 
   // Form state
   const [formData, setFormData] = useState<ArtikelFormData>({
+    ormeciArtikelNo: '',
     numuneNo: '',
     musteriKodu: '',
     musteriArtikelNo: '',
     urunTanimi: '',
+    corapGrubu: '',
+    corapTipi: '',
   });
 
   // İlk yüklemede seed et
@@ -73,10 +76,13 @@ export default function ArtikelTanimlari() {
 
   const resetForm = () => {
     setFormData({
+      ormeciArtikelNo: '',
       numuneNo: '',
       musteriKodu: '',
       musteriArtikelNo: '',
       urunTanimi: '',
+      corapGrubu: '',
+      corapTipi: '',
     });
     setEditingArtikel(null);
   };
@@ -85,10 +91,13 @@ export default function ArtikelTanimlari() {
     if (artikel) {
       setEditingArtikel(artikel);
       setFormData({
+        ormeciArtikelNo: artikel.ormeciArtikelNo || '',
         numuneNo: artikel.numuneNo,
         musteriKodu: artikel.musteriKodu,
         musteriArtikelNo: artikel.musteriArtikelNo,
         urunTanimi: artikel.urunTanimi,
+        corapGrubu: artikel.corapGrubu || '',
+        corapTipi: artikel.corapTipi || '',
       });
     } else {
       resetForm();
@@ -133,12 +142,15 @@ export default function ArtikelTanimlari() {
   };
 
   const handleExcelExport = () => {
-    const headers = ['Numune No', 'Müşteri Kodu', 'Müşteri Artikel No', 'Ürün Tanımı', 'Durum'];
+    const headers = ['Örmeci Artikel No', 'Numune No', 'Müşteri Kodu', 'Müşteri Artikel No', 'Ürün Tanımı', 'Çorap Grubu', 'Çorap Tipi', 'Durum'];
     const rows = filteredArtikeller.map((a: Artikel) => [
+      a.ormeciArtikelNo || '-',
       a.numuneNo || '-',
       a.musteriKodu,
       a.musteriArtikelNo,
       a.urunTanimi,
+      a.corapGrubu || '-',
+      a.corapTipi || '-',
       a.durum === 'AKTIF' ? 'Aktif' : 'Pasif'
     ]);
     const csv = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${c}"`).join(';')).join('\n');
@@ -174,10 +186,13 @@ export default function ArtikelTanimlari() {
   // Filtrelenmiş ve sıralanmış artikeller
   const filteredArtikeller = sortFn(
     artikeller.filter(a =>
+      (a.ormeciArtikelNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.numuneNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.musteriKodu.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.musteriArtikelNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.urunTanimi.toLowerCase().includes(searchTerm.toLowerCase())
+      a.urunTanimi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.corapGrubu || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.corapTipi || '').toLowerCase().includes(searchTerm.toLowerCase())
     ),
     (a: Artikel, f: string) => {
       const key = f as keyof Artikel;
@@ -249,10 +264,13 @@ export default function ArtikelTanimlari() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('ormeciArtikelNo')}>Örmeci Artikel No <SortIcon field="ormeciArtikelNo" sortField={sortField} sortDir={sortDir} /></TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('numuneNo')}>Numune No <SortIcon field="numuneNo" sortField={sortField} sortDir={sortDir} /></TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('musteriKodu')}>Müşteri Kodu <SortIcon field="musteriKodu" sortField={sortField} sortDir={sortDir} /></TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('musteriArtikelNo')}>Müşteri Artikel No <SortIcon field="musteriArtikelNo" sortField={sortField} sortDir={sortDir} /></TableHead>
                     <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('urunTanimi')}>Ürün Tanımı <SortIcon field="urunTanimi" sortField={sortField} sortDir={sortDir} /></TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('corapGrubu')}>Çorap Grubu <SortIcon field="corapGrubu" sortField={sortField} sortDir={sortDir} /></TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('corapTipi')}>Çorap Tipi <SortIcon field="corapTipi" sortField={sortField} sortDir={sortDir} /></TableHead>
                     <TableHead className="text-center">Durum</TableHead>
                     <TableHead className="text-right">İşlemler</TableHead>
                   </TableRow>
@@ -260,14 +278,17 @@ export default function ArtikelTanimlari() {
                 <TableBody>
                   {filteredArtikeller.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                         {searchTerm ? 'Arama sonucu bulunamadı.' : 'Henüz artikel tanımı eklenmemiş.'}
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredArtikeller.map((artikel) => (
                       <TableRow key={artikel.id} className={`hover:bg-gray-50 ${artikel.durum === 'PASIF' ? 'opacity-60 bg-gray-50' : ''}`}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium font-mono">
+                          {artikel.ormeciArtikelNo || <span className="text-gray-400">-</span>}
+                        </TableCell>
+                        <TableCell>
                           {artikel.numuneNo || <span className="text-gray-400">-</span>}
                         </TableCell>
                         <TableCell>
@@ -279,6 +300,8 @@ export default function ArtikelTanimlari() {
                         <TableCell className="max-w-xs truncate" title={artikel.urunTanimi}>
                           {artikel.urunTanimi}
                         </TableCell>
+                        <TableCell>{artikel.corapGrubu || <span className="text-gray-400">-</span>}</TableCell>
+                        <TableCell>{artikel.corapTipi || <span className="text-gray-400">-</span>}</TableCell>
                         <TableCell className="text-center">
                           <Badge className={artikel.durum === 'AKTIF' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' : 'bg-gray-100 text-gray-600'}>
                             {artikel.durum === 'AKTIF' ? 'Aktif' : 'Pasif'}
@@ -327,6 +350,15 @@ export default function ArtikelTanimlari() {
                 <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Artikel Bilgileri</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="ormeciArtikelNo">Örmeci Artikel No</Label>
+                    <Input
+                      id="ormeciArtikelNo"
+                      value={formData.ormeciArtikelNo}
+                      onChange={(e) => setFormData({ ...formData, ormeciArtikelNo: e.target.value })}
+                      placeholder="örn: 1A6A0"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="numuneNo">Numune No</Label>
                     <Input
                       id="numuneNo"
@@ -360,6 +392,24 @@ export default function ArtikelTanimlari() {
                       value={formData.urunTanimi}
                       onChange={(e) => setFormData({ ...formData, urunTanimi: e.target.value })}
                       placeholder="örn: Erkek Pamuk Çorap 40-44"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="corapGrubu">Çorap Grubu</Label>
+                    <Input
+                      id="corapGrubu"
+                      value={formData.corapGrubu}
+                      onChange={(e) => setFormData({ ...formData, corapGrubu: e.target.value })}
+                      placeholder="örn: Erkek"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="corapTipi">Çorap Tipi</Label>
+                    <Input
+                      id="corapTipi"
+                      value={formData.corapTipi}
+                      onChange={(e) => setFormData({ ...formData, corapTipi: e.target.value })}
+                      placeholder="örn: Soket"
                     />
                   </div>
                 </div>
@@ -419,10 +469,13 @@ export default function ArtikelTanimlari() {
             {detailArtikel && (
               <div className="space-y-3 py-2 text-sm">
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                  <span className="text-gray-500">Örmeci Artikel No:</span><span className="font-medium">{detailArtikel.ormeciArtikelNo || '-'}</span>
                   <span className="text-gray-500">Numune No:</span><span className="font-medium">{detailArtikel.numuneNo || '-'}</span>
                   <span className="text-gray-500">Müşteri Kodu:</span><span className="font-medium">{detailArtikel.musteriKodu}</span>
                   <span className="text-gray-500">Müşteri Artikel No:</span><span className="font-medium">{detailArtikel.musteriArtikelNo}</span>
                   <span className="text-gray-500">Ürün Tanımı:</span><span className="font-medium">{detailArtikel.urunTanimi}</span>
+                  <span className="text-gray-500">Çorap Grubu:</span><span className="font-medium">{detailArtikel.corapGrubu || '-'}</span>
+                  <span className="text-gray-500">Çorap Tipi:</span><span className="font-medium">{detailArtikel.corapTipi || '-'}</span>
                   <span className="text-gray-500">Durum:</span><span>{detailArtikel.durum === 'AKTIF' ? 'Aktif' : 'Pasif'}</span>
                   <span className="text-gray-500">Kaynak:</span><span>{detailArtikel.kaynak === 'manuel' ? 'Manuel' : 'Numune'}</span>
                   <span className="text-gray-500">Oluşturma Tarihi:</span><span>{new Date(detailArtikel.olusturmaTarihi).toLocaleDateString('tr-TR')}</span>

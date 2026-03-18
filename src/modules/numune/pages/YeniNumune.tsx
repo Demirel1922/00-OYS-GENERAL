@@ -548,6 +548,9 @@ export function YeniNumune() {
         musteriKodu: formData.generalInfo.musteriKodu,
         musteriArtikelNo: formData.generalInfo.musteriArtikelKodu || '',
         urunTanimi: formData.generalInfo.corapTanimi || '',
+        ormeciArtikelNo: formData.generalInfo.numuneNo || '',
+        corapGrubu: formData.generalInfo.cinsiyet || '',
+        corapTipi: formData.generalInfo.corapTipi || '',
       });
       if (!result.success) {
         showToast('Numune onaylandı ancak artikel tanımı oluşturulamadı. Lütfen Artikel Tanımları ekranını kontrol edin.', 'error');

@@ -113,10 +113,13 @@ export interface LookupItem {
 
 export interface Artikel {
   id: string;
+  ormeciArtikelNo: string;
   numuneNo: string;
   musteriKodu: string;
   musteriArtikelNo: string;
   urunTanimi: string;
+  corapGrubu: string;
+  corapTipi: string;
   kaynak: 'manuel' | 'numune';
   durum: 'AKTIF' | 'PASIF';
   numuneId: string | null;
@@ -126,10 +129,13 @@ export interface Artikel {
 }
 
 export interface ArtikelFormData {
+  ormeciArtikelNo: string;
   numuneNo: string;
   musteriKodu: string;
   musteriArtikelNo: string;
   urunTanimi: string;
+  corapGrubu: string;
+  corapTipi: string;
 }
 
 // ============================================

@@ -6,6 +6,7 @@ export type SockType = string;
 
 export interface SalesOrderLine {
   id: string;
+  artikel_no?: string; // Örmeci Artikel No — eski kayıtlarda olmayabilir
   product_name: string;
   gender: string; // Dinamik - lookupStore CINSIYET'ten geliyor
   sock_type: string; // Dinamik - lookupStore TIP'ten geliyor

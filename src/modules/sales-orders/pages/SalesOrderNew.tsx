@@ -37,11 +37,14 @@ import { Header } from '@/components/common/Header';
 import { useMusteriStore } from '@/store/musteriStore';
 import { useRenkStore } from '@/store/renkStore';
 import { useLookupStore } from '@/store/lookupStore';
+import { useArtikelStore } from '@/store/artikelStore';
 import { toTitleCaseTR } from '@/utils/titleCase';
+import { ArtikelCombobox } from '@/modules/sales-orders/components/ArtikelCombobox';
 
 function makeEmptyLine(defaultCurrency: string = 'TRY') {
   return {
     id: crypto.randomUUID(),
+    artikel_no: '',
     product_name: '',
     gender: '',
     sock_type: '',
@@ -65,12 +68,14 @@ export function SalesOrderNew() {
   const { musteriler, seedData: seedMusteri } = useMusteriStore();
   const { renkler, seedData: seedRenk } = useRenkStore();
   const { items: lookupItems, seedData: seedLookup, getSortedItemsByType } = useLookupStore();
+  const { artikeller, seedData: seedArtikel } = useArtikelStore();
 
   // İlk yüklemede seed data
   useEffect(() => {
     if (musteriler.length === 0) seedMusteri();
     if (renkler.length === 0) seedRenk();
     if (lookupItems.length === 0) seedLookup();
+    seedArtikel();
   }, []);
 
   // Dinamik listeler
@@ -169,7 +174,10 @@ export function SalesOrderNew() {
     if (!line) return false;
 
     const errors: string[] = [];
-    if (!line.product_name?.trim()) errors.push('Ürün adı');
+    if (!line.artikel_no?.trim()) errors.push('Örmeci Artikel No');
+    if (!line.product_name?.trim()) errors.push('Ürün Tanımı');
+    if (!line.gender?.trim()) errors.push('Çorap Grubu');
+    if (!line.sock_type?.trim()) errors.push('Çorap Tipi');
     if (!line.color?.trim()) errors.push('Renk');
     if (!line.size) errors.push('Beden');
     if (!line.quantity || line.quantity <= 0) errors.push('Miktar');
@@ -235,6 +243,7 @@ export function SalesOrderNew() {
       const calculated = calculateLineTotals(
         {
           id: line.id,
+          artikel_no: line.artikel_no || '',
           product_name: line.product_name,
           gender: line.gender,
           sock_type: line.sock_type,
@@ -474,14 +483,14 @@ export function SalesOrderNew() {
                             <Check className="w-3 h-3" /> Eklendi
                           </div>
                           <div className="flex-1 grid grid-cols-2 md:grid-cols-10 gap-2 text-sm">
-                            <div><span className="text-gray-500 text-xs block">Ürün</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Artikel No</span><span className="font-medium font-mono">{watchedLine?.artikel_no || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Ürün Tanımı</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{watchedLine?.gender || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Tip</span><span>{watchedLine?.sock_type || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Çorap Tipi</span><span>{watchedLine?.sock_type || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Renk</span><span>{watchedLine?.color || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Beden</span><span>{watchedLine?.size || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Miktar</span><span className="font-medium">{formatQuantity(watchedLine?.quantity ?? 0)}</span></div>
                             <div><span className="text-gray-500 text-xs block">Birim</span><span>{getBirimAdi(watchedLine?.price_unit)}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Toplam Çift</span><span className="font-medium">{formatQuantity(watchedLine?.line_total_pairs ?? 0)}</span></div>
                             <div><span className="text-gray-500 text-xs block">Birim Fiyat</span><span>{watchedLine?.unit_price || '0'} {lineCurrency}</span></div>
                             <div><span className="text-gray-500 text-xs block">Tutar</span><span className="font-bold">{formatMoney2(watchedLine?.line_amount, lineCurrency)}</span></div>
                           </div>
@@ -500,22 +509,52 @@ export function SalesOrderNew() {
                         /* Onaylanmamış kalem — düzenleme formu */
                         <>
                       <div className="space-y-3">
-                        {/* Satır 1: Ürün, Çorap Grubu, Tip, Renk, Beden */}
+                        {/* Satır 0: Örmeci Artikel No seçimi */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <FormField control={form.control} name={`lines.${index}.artikel_no`} render={({ field: artikelField }) => (
+                            <FormItem>
+                              <FormLabel>Örmeci Artikel No</FormLabel>
+                              <FormControl>
+                                <ArtikelCombobox
+                                  artikeller={artikeller}
+                                  value={artikelField.value || ''}
+                                  disabled={isConfirmed}
+                                  onSelect={(artikel) => {
+                                    if (artikel) {
+                                      form.setValue(`lines.${index}.artikel_no`, artikel.ormeciArtikelNo || '', { shouldValidate: true });
+                                      form.setValue(`lines.${index}.product_name`, artikel.urunTanimi || '', { shouldValidate: true });
+                                      form.setValue(`lines.${index}.gender`, artikel.corapGrubu || '', { shouldValidate: true });
+                                      form.setValue(`lines.${index}.sock_type`, artikel.corapTipi || '', { shouldValidate: true });
+                                    } else {
+                                      form.setValue(`lines.${index}.artikel_no`, '', { shouldValidate: true });
+                                      form.setValue(`lines.${index}.product_name`, '', { shouldValidate: true });
+                                      form.setValue(`lines.${index}.gender`, '', { shouldValidate: true });
+                                      form.setValue(`lines.${index}.sock_type`, '', { shouldValidate: true });
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        </div>
+
+                        {/* Satır 1: Ürün Tanımı, Çorap Grubu, Çorap Tipi, Renk, Beden */}
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        {/* Urun Adi */}
+                        {/* Ürün Tanımı — artikel seçiliyken readonly */}
                         <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Ürün Adı</FormLabel>
-                            <FormControl><Input {...field} placeholder="Ürün adı" disabled={isConfirmed} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
+                            <FormLabel>Ürün Tanımı</FormLabel>
+                            <FormControl><Input {...field} placeholder="Artikel seçin" disabled={isConfirmed || !!watchedLine?.artikel_no} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
 
-                        {/* Çorap Grubu */}
+                        {/* Çorap Grubu — artikel seçiliyken readonly */}
                         <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Çorap Grubu</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed || !!watchedLine?.artikel_no}>
                               <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
@@ -525,11 +564,11 @@ export function SalesOrderNew() {
                           </FormItem>
                         )} />
 
-                        {/* Madde 3: Tip (Çorap Grubu ile Renk arası) */}
+                        {/* Çorap Tipi — artikel seçiliyken readonly */}
                         <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tip</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
+                            <FormLabel>Çorap Tipi</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed || !!watchedLine?.artikel_no}>
                               <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}

@@ -76,13 +76,14 @@ const s = StyleSheet.create({
   table: { marginTop: 8 },
   tHead: { flexDirection: 'row', backgroundColor: '#f0f0f0', paddingTop: 4, paddingBottom: 4, paddingLeft: 2, paddingRight: 2, borderBottom: '1px solid #000' },
   tRow: { flexDirection: 'row', paddingTop: 3, paddingBottom: 3, paddingLeft: 2, paddingRight: 2, borderBottom: '1px solid #ddd' },
-  colProduct: { width: '14%', fontSize: 7 },
+  colArtikel: { width: '10%', fontSize: 7 },
+  colProduct: { width: '12%', fontSize: 7 },
   colGender: { width: '8%', fontSize: 7 },
-  colType: { width: '12%', fontSize: 7 },
-  colColor: { width: '10%', fontSize: 7 },
-  colSize: { width: '8%', fontSize: 7, textAlign: 'center' },
-  colQty: { width: '10%', fontSize: 7, textAlign: 'right' },
-  colUnit: { width: '10%', fontSize: 7, textAlign: 'center' },
+  colType: { width: '10%', fontSize: 7 },
+  colColor: { width: '8%', fontSize: 7 },
+  colSize: { width: '7%', fontSize: 7, textAlign: 'center' },
+  colQty: { width: '9%', fontSize: 7, textAlign: 'right' },
+  colUnit: { width: '8%', fontSize: 7, textAlign: 'center' },
   colPrice: { width: '14%', fontSize: 7, textAlign: 'right' },
   colTotal: { width: '14%', fontSize: 7, textAlign: 'right' },
   thText: { fontSize: 7, fontWeight: 'bold' },
@@ -200,9 +201,10 @@ function OrderPDFDocument({ order }: { order: SalesOrder }) {
           <Text style={s.sectionTitle}>Sipariş Kalemleri / Order Items</Text>
           <View style={s.table}>
             <View style={s.tHead}>
-              <View style={s.colProduct}><Text style={s.thText}>Ürün</Text><Text style={s.thSub}>Product</Text></View>
+              <View style={s.colArtikel}><Text style={s.thText}>Artikel No</Text><Text style={s.thSub}>Article No</Text></View>
+              <View style={s.colProduct}><Text style={s.thText}>Ürün Tanımı</Text><Text style={s.thSub}>Product</Text></View>
               <View style={s.colGender}><Text style={s.thText}>Çorap Grubu</Text><Text style={s.thSub}>Sock Group</Text></View>
-              <View style={s.colType}><Text style={s.thText}>Tip</Text><Text style={s.thSub}>Type</Text></View>
+              <View style={s.colType}><Text style={s.thText}>Çorap Tipi</Text><Text style={s.thSub}>Type</Text></View>
               <View style={s.colColor}><Text style={s.thText}>Renk</Text><Text style={s.thSub}>Color</Text></View>
               <View style={{...s.colSize}}><Text style={{...s.thText, textAlign: 'center'}}>Beden</Text><Text style={{...s.thSub, textAlign: 'center'}}>Size</Text></View>
               <View style={{...s.colQty}}><Text style={{...s.thText, textAlign: 'right'}}>Miktar</Text><Text style={{...s.thSub, textAlign: 'right'}}>Qty</Text></View>
@@ -214,6 +216,7 @@ function OrderPDFDocument({ order }: { order: SalesOrder }) {
               const lCurr = l?.currency || safeOrder.currency;
               return (
               <View key={i} style={s.tRow}>
+                <Text style={s.colArtikel}>{l?.artikel_no || '-'}</Text>
                 <Text style={s.colProduct}>{l?.product_name || '-'}</Text>
                 <Text style={s.colGender}>{getGender(l?.gender)}</Text>
                 <Text style={s.colType}>{getSockType(l?.sock_type)}</Text>
