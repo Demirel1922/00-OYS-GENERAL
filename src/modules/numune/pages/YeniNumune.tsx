@@ -55,7 +55,11 @@ const CINSIYET_OPTIONS = [
   { value: '3', label: '3 - Çocuk' },
   { value: '4', label: '4 - Bebek' },
   { value: '5', label: '5 - Unisex' },
-  { value: '6', label: '6 - Külotlu Çorap' },
+  { value: '6', label: '6 - Külotlu' },
+  { value: '7', label: '7 - Erkek 2' },
+  { value: '8', label: '8 - Kadın 2' },
+  { value: '9', label: '9 - Bebek-Çocuk 2' },
+  { value: '0', label: '0 - Unisex 2' },
 ];
 
 const NUMUNE_TIPI_OPTIONS = [
@@ -268,8 +272,16 @@ export function YeniNumune() {
           ...prev,
           generalInfo: { ...prev.generalInfo, numuneNo: newNumuneNo }
         }));
-      }).catch(() => {
-        showToast('Numune numarası üretilemedi', 'error');
+      }).catch((err) => {
+        if (err?.message === 'KAPASITE_DOLU') {
+          showToast('Bu çorap grubu kodunda numune kapasitesi doldu (A0-Z9). Lütfen yeni bir çorap grubu seçin.', 'error');
+          setFormData(prev => ({
+            ...prev,
+            generalInfo: { ...prev.generalInfo, numuneNo: '', cinsiyet: '' }
+          }));
+        } else {
+          showToast('Numune numarası üretilemedi', 'error');
+        }
       });
     }
   }, [formData.generalInfo.cinsiyet, isEditMode]);
@@ -364,7 +376,7 @@ export function YeniNumune() {
   const getMissingGeneralFields = () => {
     const g = formData.generalInfo;
     const missing = [];
-    if (!g.cinsiyet?.trim()) missing.push('Cinsiyet');
+    if (!g.cinsiyet?.trim()) missing.push('Çorap Grubu');
     if (!g.numuneTipi?.trim()) missing.push('Numune Tipi');
     if (!g.sebep?.trim()) missing.push('Sebep');
     if (!g.musteriKodu?.trim()) missing.push('Müşteri Kodu');
@@ -391,7 +403,7 @@ export function YeniNumune() {
 
   const validate = () => {
     const g = formData.generalInfo;
-    if (!g.cinsiyet?.trim()) { showToast('Cinsiyet zorunludur', 'error'); return false; }
+    if (!g.cinsiyet?.trim()) { showToast('Çorap Grubu zorunludur', 'error'); return false; }
     if (!g.numuneTipi?.trim()) { showToast('Numune Tipi zorunludur', 'error'); return false; }
     if (!g.sebep?.trim()) { showToast('Numunenin Sebebi zorunludur', 'error'); return false; }
     if (!g.musteriKodu?.trim()) { showToast('Müşteri Kodu zorunludur', 'error'); return false; }
@@ -569,10 +581,10 @@ export function YeniNumune() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Numune No</label>
-                <input type="text" disabled value={formData.generalInfo.numuneNo} placeholder="Cinsiyet seçince otomatik oluşur" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-100 text-gray-600 text-sm" />
+                <input type="text" disabled value={formData.generalInfo.numuneNo} placeholder="Çorap Grubu seçince otomatik oluşur" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-100 text-gray-600 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cinsiyet *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Grubu *</label>
                 <select value={formData.generalInfo.cinsiyet} onChange={(e) => handleGeneralChange('cinsiyet', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
                   <option value="">Seçiniz</option>
                   {CINSIYET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}

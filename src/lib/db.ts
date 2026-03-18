@@ -164,12 +164,16 @@ export async function setOrderCounter(newSeq: number): Promise<void> {
 
 /**
  * Bir sonraki numune sırasını hesapla
- * "" → A0 (ilk numune), A9 → B0, Z9 → A0 (wrap)
+ * "" → A0 (ilk numune), A9 → B0, Z9 → null (kapasite dolu)
  */
-function nextSira(current: string): string {
+function nextSira(current: string): string | null {
   // Boş veya geçersiz → ilk numune A0
   if (!current || !/^[A-Z]\d$/.test(current)) {
     return 'A0';
+  }
+  // Z9 ise kapasite dolu — wrap-around yapmıyoruz
+  if (current === 'Z9') {
+    return null;
   }
   let harf = current.charAt(0);
   let sayi = parseInt(current.slice(1), 10);
@@ -177,7 +181,6 @@ function nextSira(current: string): string {
   if (sayi > 9) {
     sayi = 0;
     harf = String.fromCharCode(harf.charCodeAt(0) + 1);
-    if (harf > 'Z') harf = 'A';
   }
   return `${harf}${sayi}`;
 }
@@ -227,6 +230,11 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
   // Bir sonraki sırayı hesapla
   const yeniSira = nextSira(counter.lastSira);
 
+  // Kapasite kontrolü — Z9 sonrası taşma engeli
+  if (yeniSira === null) {
+    throw new Error('KAPASITE_DOLU');
+  }
+
   // Çakışma kontrolü: mevcut numune listesindeki aynı grup+yıl numaraları
   const mevcutListe = JSON.parse(localStorage.getItem('oys_numune_listesi') || '[]');
   const usedSiras = new Set(
@@ -236,11 +244,16 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
       .map((no: string) => no.slice(2)) // Harf+Sayı kısmı
   );
 
-  let finalSira = yeniSira;
+  let finalSira: string | null = yeniSira;
   let safety = 0;
-  while (usedSiras.has(finalSira) && safety < MAX_SIRA_COUNT) {
+  while (finalSira && usedSiras.has(finalSira) && safety < MAX_SIRA_COUNT) {
     finalSira = nextSira(finalSira);
     safety++;
+  }
+
+  // Çakışma atlatma sırasında da kapasite kontrolü
+  if (finalSira === null) {
+    throw new Error('KAPASITE_DOLU');
   }
 
   // Sayacı burada güncellemiyoruz — kayıt sırasında commitNumuneSira() çağrılacak

@@ -140,7 +140,7 @@ export default function BilgiGirisleri() {
     {
       id: 'genel-corap-bilgileri',
       title: 'Genel Çorap Bilgileri',
-      description: 'Bedenler, Tipler ve Cinsiyetler listelerini yönetin. Sipariş ve üretimde kullanılır.',
+      description: 'Bedenler, Tipler ve Çorap Gruplarını yönetin. Sipariş ve üretimde kullanılır.',
       icon: Footprints,
       route: '/module/1/genel-corap-bilgileri',
       color: 'bg-teal-500',
@@ -292,7 +292,7 @@ export default function BilgiGirisleri() {
           </Card>
         </div>
 
-        {/* Son Numune Sıra No — Cinsiyet Bazlı */}
+        {/* Son Numune Sıra No — Çorap Grubu Bazlı */}
         <div className="mb-8">
           <Card className="bg-indigo-50 border-indigo-200">
             <CardContent className="pt-4 pb-4">
@@ -301,7 +301,7 @@ export default function BilgiGirisleri() {
                   <Hash className="w-6 h-6 text-indigo-600" />
                   <div>
                     <p className="text-sm text-indigo-700 font-medium">Son Numune Sırası ({new Date().getFullYear()})</p>
-                    <p className="text-xs text-indigo-500">Her cinsiyet için ayrı sıra sayacı</p>
+                    <p className="text-xs text-indigo-500">Her çorap grubu için ayrı sıra sayacı</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

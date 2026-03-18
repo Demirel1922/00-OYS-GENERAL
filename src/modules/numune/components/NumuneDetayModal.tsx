@@ -181,7 +181,7 @@ export function NumuneDetayModal({ isOpen, onClose, numuneId }: NumuneDetayModal
       ['Musteri Kodu',    tr(data.musteriKodu || data.musteri)],
       ['Artikel No',      tr(data.musteriArtikelKodu || data.musteriArtikelNo)],
       ['Marka',           tr(data.musteriMarkasi)],
-      ['Cinsiyet',        tr(data.cinsiyet)],
+      ['Çorap Grubu',     tr(data.cinsiyet)],
       ['Corap Tipi',      tr(data.corapTipi)],
       ['Corap Dokusu',    tr(data.corapDokusu)],
       ['Igne / Kovan',    `${tr(data.igneSayisi)} / ${tr(data.kovanCapi)}`],
