@@ -15,6 +15,8 @@ interface NumuneArtikelData {
   musteriKodu: string;
   musteriArtikelNo: string;
   urunTanimi: string;
+  corapGrubu?: string;
+  corapTipi?: string;
 }
 
 // FAZ 2B: Aktarım sonucu
@@ -99,7 +101,7 @@ export const useArtikelStore = create<ArtikelState>()(
       // ============================================
       addArtikelFromNumune: (data) => {
         const { artikeller } = get();
-        const { numuneId, numuneNo, musteriKodu, musteriArtikelNo, urunTanimi } = data;
+        const { numuneId, numuneNo, musteriKodu, musteriArtikelNo, urunTanimi, corapGrubu, corapTipi } = data;
 
         // Katman 1: numuneId eşleşmesi → aynı numune zaten aktarılmış, atla
         const numuneIdMatch = artikeller.find(a => a.numuneId === numuneId);
@@ -155,10 +157,13 @@ export const useArtikelStore = create<ArtikelState>()(
         // Eşleşme yok → yeni artikel kaydı oluştur (snapshot)
         const newArtikel: Artikel = {
           id: generateId(),
+          ormeciArtikelNo: '',
           numuneNo,
           musteriKodu,
           musteriArtikelNo,
           urunTanimi,
+          corapGrubu: corapGrubu || '',
+          corapTipi: corapTipi || '',
           kaynak: 'numune',
           durum: 'AKTIF',
           numuneId,
@@ -277,8 +282,14 @@ export const useArtikelStore = create<ArtikelState>()(
       seedData: () => {
         const { artikeller } = get();
         if (artikeller.length > 0) {
-          // Mevcut kayıtlara durum yoksa AKTIF ekle
-          const updated = artikeller.map((a: Artikel) => ({ ...a, durum: a.durum || 'AKTIF' }));
+          // Mevcut kayıtlara eksik alanlar varsa varsayılan ekle
+          const updated = artikeller.map((a: Artikel) => ({
+            ...a,
+            durum: a.durum || 'AKTIF',
+            ormeciArtikelNo: a.ormeciArtikelNo || '',
+            corapGrubu: a.corapGrubu || '',
+            corapTipi: a.corapTipi || '',
+          }));
           set({ artikeller: updated });
           return;
         }

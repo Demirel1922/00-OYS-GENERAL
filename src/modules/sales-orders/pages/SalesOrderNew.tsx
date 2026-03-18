@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +14,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, ArrowLeft, Save, CheckCircle, Check, PlusCircle } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Trash2, ArrowLeft, Save, CheckCircle, Check, PlusCircle, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { salesOrderSchema, type SalesOrderFormData } from '@/modules/sales-orders/domain/schema';
 import {
@@ -37,11 +50,14 @@ import { Header } from '@/components/common/Header';
 import { useMusteriStore } from '@/store/musteriStore';
 import { useRenkStore } from '@/store/renkStore';
 import { useLookupStore } from '@/store/lookupStore';
+import { useArtikelStore } from '@/store/artikelStore';
 import { toTitleCaseTR } from '@/utils/titleCase';
+import { cn } from '@/lib/utils';
 
 function makeEmptyLine(defaultCurrency: string = 'TRY') {
   return {
     id: crypto.randomUUID(),
+    artikel_no: '',
     product_name: '',
     gender: '',
     sock_type: '',
@@ -65,17 +81,20 @@ export function SalesOrderNew() {
   const { musteriler, seedData: seedMusteri } = useMusteriStore();
   const { renkler, seedData: seedRenk } = useRenkStore();
   const { items: lookupItems, seedData: seedLookup, getSortedItemsByType } = useLookupStore();
+  const { artikeller, seedData: seedArtikel } = useArtikelStore();
 
   // İlk yüklemede seed data
   useEffect(() => {
     if (musteriler.length === 0) seedMusteri();
     if (renkler.length === 0) seedRenk();
     if (lookupItems.length === 0) seedLookup();
+    seedArtikel();
   }, []);
 
   // Dinamik listeler
   const aktifMusteriler = useMemo(() => musteriler.filter(m => m.durum === 'AKTIF'), [musteriler]);
   const aktifRenkler = useMemo(() => renkler.filter(r => r.durum === 'AKTIF'), [renkler]);
+  const aktifArtikeller = useMemo(() => artikeller.filter(a => a.durum === 'AKTIF'), [artikeller]);
   const bedenler = useMemo(() => getSortedItemsByType('BEDEN'), [lookupItems]);
   const cinsiyetler = useMemo(() => getSortedItemsByType('CINSIYET'), [lookupItems]);
   const corapTipleri = useMemo(() => getSortedItemsByType('TIP'), [lookupItems]);
@@ -122,6 +141,7 @@ export function SalesOrderNew() {
 
     const updatedLine = {
       id: line.id,
+      artikel_no: line.artikel_no,
       product_name: line.product_name,
       gender: line.gender,
       sock_type: line.sock_type,
@@ -169,7 +189,8 @@ export function SalesOrderNew() {
     if (!line) return false;
 
     const errors: string[] = [];
-    if (!line.product_name?.trim()) errors.push('Ürün adı');
+    if (!line.artikel_no?.trim()) errors.push('Örmeci Artikel No');
+    if (!line.product_name?.trim()) errors.push('Ürün tanımı');
     if (!line.color?.trim()) errors.push('Renk');
     if (!line.size) errors.push('Beden');
     if (!line.quantity || line.quantity <= 0) errors.push('Miktar');
@@ -235,6 +256,7 @@ export function SalesOrderNew() {
       const calculated = calculateLineTotals(
         {
           id: line.id,
+          artikel_no: line.artikel_no,
           product_name: line.product_name,
           gender: line.gender,
           sock_type: line.sock_type,
@@ -473,10 +495,11 @@ export function SalesOrderNew() {
                           <div className="flex items-center gap-1 text-green-700 text-xs font-medium shrink-0">
                             <Check className="w-3 h-3" /> Eklendi
                           </div>
-                          <div className="flex-1 grid grid-cols-2 md:grid-cols-10 gap-2 text-sm">
-                            <div><span className="text-gray-500 text-xs block">Ürün</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-11 gap-2 text-sm">
+                            <div><span className="text-gray-500 text-xs block">Artikel No</span><span className="font-medium font-mono">{watchedLine?.artikel_no || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Ürün Tanımı</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{watchedLine?.gender || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Tip</span><span>{watchedLine?.sock_type || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Çorap Tipi</span><span>{watchedLine?.sock_type || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Renk</span><span>{watchedLine?.color || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Beden</span><span>{watchedLine?.size || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Miktar</span><span className="font-medium">{formatQuantity(watchedLine?.quantity ?? 0)}</span></div>
@@ -500,51 +523,64 @@ export function SalesOrderNew() {
                         /* Onaylanmamış kalem — düzenleme formu */
                         <>
                       <div className="space-y-3">
-                        {/* Satır 1: Ürün, Çorap Grubu, Tip, Renk, Beden */}
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        {/* Urun Adi */}
-                        <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ürün Adı</FormLabel>
-                            <FormControl><Input {...field} placeholder="Ürün adı" disabled={isConfirmed} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
+                        {/* Satır 1: Örmeci Artikel No, Ürün Tanımı, Çorap Grubu, Çorap Tipi, Renk, Beden */}
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+
+                        {/* Örmeci Artikel No - Searchable Combobox */}
+                        <FormField control={form.control} name={`lines.${index}.artikel_no`} render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="h-[17px]">Örmeci Artikel No</FormLabel>
+                            <ArtikelCombobox
+                              value={field.value}
+                              artikeller={aktifArtikeller}
+                              disabled={isConfirmed}
+                              onSelect={(artikelNo, artikel) => {
+                                field.onChange(artikelNo);
+                                // Otomatik doldur: Ürün Tanımı, Çorap Grubu, Çorap Tipi
+                                if (artikel) {
+                                  form.setValue(`lines.${index}.product_name`, artikel.urunTanimi || '');
+                                  form.setValue(`lines.${index}.gender`, artikel.corapGrubu || '');
+                                  form.setValue(`lines.${index}.sock_type`, artikel.corapTipi || '');
+                                }
+                              }}
+                            />
                             <FormMessage />
                           </FormItem>
                         )} />
 
-                        {/* Çorap Grubu */}
+                        {/* Ürün Tanımı (otomatik dolar) */}
+                        <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ürün Tanımı</FormLabel>
+                            <FormControl><Input {...field} placeholder="Artikel seçince dolar" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+
+                        {/* Çorap Grubu (otomatik dolar) */}
                         <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Çorap Grubu</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <FormControl><Input {...field} placeholder="Artikel seçince dolar" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
 
-                        {/* Madde 3: Tip (Çorap Grubu ile Renk arası) */}
+                        {/* Çorap Tipi (otomatik dolar) */}
                         <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tip</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Çorap Tipi</FormLabel>
+                            <FormControl><Input {...field} placeholder="Artikel seçince dolar" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
 
-                        {/* Renk */}
+                        {/* Renk (manuel seçim) */}
                         <FormField control={form.control} name={`lines.${index}.color`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Renk</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue placeholder="Renk seçin" /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="h-9"><SelectValue placeholder="Renk seçin" /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {aktifRenkler.map((r) => <SelectItem key={r.id} value={r.renkAdi}>{r.renkAdi}</SelectItem>)}
                               </SelectContent>
@@ -553,12 +589,12 @@ export function SalesOrderNew() {
                           </FormItem>
                         )} />
 
-                        {/* Beden */}
+                        {/* Beden (manuel seçim) */}
                         <FormField control={form.control} name={`lines.${index}.size`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Beden</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                              <FormControl><SelectTrigger className="h-9"><SelectValue /></SelectTrigger></FormControl>
                               <SelectContent>
                                 {bedenler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
                               </SelectContent>
@@ -734,5 +770,80 @@ export function SalesOrderNew() {
       </Card>
       </div>
     </div>
+  );
+}
+
+// ============================================
+// Örmeci Artikel No — Aramalı Combobox Bileşeni
+// ============================================
+interface ArtikelComboboxProps {
+  value: string;
+  artikeller: import('@/types').Artikel[];
+  disabled?: boolean;
+  onSelect: (artikelNo: string, artikel: import('@/types').Artikel | null) => void;
+}
+
+function ArtikelCombobox({ value, artikeller, disabled, onSelect }: ArtikelComboboxProps) {
+  const [open, setOpen] = useState(false);
+
+  const selectedArtikel = useMemo(
+    () => artikeller.find(a => a.ormeciArtikelNo === value) || null,
+    [artikeller, value]
+  );
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className={cn(
+            "h-9 w-full justify-between font-normal",
+            !value && "text-muted-foreground"
+          )}
+        >
+          <span className="truncate">
+            {value || "Artikel No seçin..."}
+          </span>
+          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[420px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Artikel No veya ürün tanımı ara..." />
+          <CommandList>
+            <CommandEmpty>Eşleşen artikel bulunamadı.</CommandEmpty>
+            <CommandGroup>
+              {artikeller.map((artikel) => (
+                <CommandItem
+                  key={artikel.id}
+                  value={`${artikel.ormeciArtikelNo} ${artikel.urunTanimi} ${artikel.corapGrubu} ${artikel.corapTipi}`}
+                  onSelect={() => {
+                    onSelect(artikel.ormeciArtikelNo, artikel);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="flex flex-col w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-medium text-sm">{artikel.ormeciArtikelNo || '-'}</span>
+                      <span className="text-gray-400">–</span>
+                      <span className="text-sm truncate">{artikel.urunTanimi}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {artikel.corapGrubu || '-'} · {artikel.corapTipi || '-'}
+                    </div>
+                  </div>
+                  {value === artikel.ormeciArtikelNo && (
+                    <Check className="ml-auto h-4 w-4 shrink-0 text-green-600" />
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

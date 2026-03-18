@@ -197,9 +197,10 @@ export function SalesOrderDetail() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Ürün</th>
+                      <th className="text-left py-3 px-4 font-medium">Artikel No</th>
+                      <th className="text-left py-3 px-4 font-medium">Ürün Tanımı</th>
                       <th className="text-left py-3 px-4 font-medium">Çorap Grubu</th>
-                      <th className="text-left py-3 px-4 font-medium">Tip</th>
+                      <th className="text-left py-3 px-4 font-medium">Çorap Tipi</th>
                       <th className="text-left py-3 px-4 font-medium">Renk</th>
                       <th className="text-left py-3 px-4 font-medium">Beden</th>
                       <th className="text-right py-3 px-4 font-medium">Miktar</th>
@@ -214,6 +215,7 @@ export function SalesOrderDetail() {
                       const lineCurrency = line.currency || order.currency;
                       return (
                         <tr key={line.id || index} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-mono">{(line as any).artikel_no || '-'}</td>
                           <td className="py-3 px-4">{line.product_name}</td>
                           <td className="py-3 px-4">{line.gender || '-'}</td>
                           <td className="py-3 px-4">{SOCK_TYPE_LABELS[line.sock_type] || line.sock_type || ''}</td>

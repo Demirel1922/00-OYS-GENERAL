@@ -202,7 +202,7 @@ function OrderPDFDocument({ order }: { order: SalesOrder }) {
             <View style={s.tHead}>
               <View style={s.colProduct}><Text style={s.thText}>Ürün</Text><Text style={s.thSub}>Product</Text></View>
               <View style={s.colGender}><Text style={s.thText}>Çorap Grubu</Text><Text style={s.thSub}>Sock Group</Text></View>
-              <View style={s.colType}><Text style={s.thText}>Tip</Text><Text style={s.thSub}>Type</Text></View>
+              <View style={s.colType}><Text style={s.thText}>Çorap Tipi</Text><Text style={s.thSub}>Sock Type</Text></View>
               <View style={s.colColor}><Text style={s.thText}>Renk</Text><Text style={s.thSub}>Color</Text></View>
               <View style={{...s.colSize}}><Text style={{...s.thText, textAlign: 'center'}}>Beden</Text><Text style={{...s.thSub, textAlign: 'center'}}>Size</Text></View>
               <View style={{...s.colQty}}><Text style={{...s.thText, textAlign: 'right'}}>Miktar</Text><Text style={{...s.thSub, textAlign: 'right'}}>Qty</Text></View>
