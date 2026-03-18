@@ -268,6 +268,8 @@ export function YeniNumune() {
           ...prev,
           generalInfo: { ...prev.generalInfo, numuneNo: newNumuneNo }
         }));
+      }).catch(() => {
+        showToast('Numune numarası üretilemedi', 'error');
       });
     }
   }, [formData.generalInfo.cinsiyet, isEditMode]);

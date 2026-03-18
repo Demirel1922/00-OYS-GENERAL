@@ -152,6 +152,10 @@ export async function setOrderCounter(newSeq: number): Promise<void> {
  * A0 → A1, A9 → B1, Z9 → A1 (wrap)
  */
 function nextSira(current: string): string {
+  // Geçersiz format koruması — varsayılan A0
+  if (!current || !/^[A-Z]\d$/.test(current)) {
+    return 'A1';
+  }
   let harf = current.charAt(0);
   let sayi = parseInt(current.slice(1), 10);
   sayi++;
@@ -168,6 +172,7 @@ function nextSira(current: string): string {
  * A1=1, A2=2, ... A9=9, B1=10, B2=11, ... Z9=234
  */
 function siraToIndex(sira: string): number {
+  if (!sira || !/^[A-Z]\d$/.test(sira)) return 0;
   const harf = sira.charAt(0);
   const sayi = parseInt(sira.slice(1), 10);
   return (harf.charCodeAt(0) - 65) * 9 + sayi;
@@ -244,6 +249,8 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
 export async function commitNumuneSira(numuneNo: string): Promise<void> {
   if (!numuneNo || numuneNo.length < 3) return;
   const sira = numuneNo.slice(2); // "16A1" → "A1"
+  // Geçersiz format koruması
+  if (!/^[A-Z]\d$/.test(sira)) return;
   const currentYear = new Date().getFullYear();
   let counter = await db.numuneCounter.where('year').equals(currentYear).first();
   if (counter) {
