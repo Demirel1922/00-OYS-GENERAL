@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -548,29 +548,29 @@ export function SalesOrderNew() {
                           </FormItem>
                         )} />
 
-                        {/* Ürün Tanımı (otomatik dolar) */}
+                        {/* Ürün Tanımı (otomatik dolacak) */}
                         <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Ürün Tanımı</FormLabel>
-                            <FormControl><Input {...field} placeholder="Artikel seçince dolar" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
+                            <FormControl><Input {...field} placeholder="Artikel seçince dolacak" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
 
-                        {/* Çorap Grubu (otomatik dolar) */}
+                        {/* Çorap Grubu (otomatik dolacak) */}
                         <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Çorap Grubu</FormLabel>
-                            <FormControl><Input {...field} placeholder="Artikel seçince dolar" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
+                            <FormControl><Input {...field} placeholder="Artikel seçince dolacak" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
 
-                        {/* Çorap Tipi (otomatik dolar) */}
+                        {/* Çorap Tipi (otomatik dolacak) */}
                         <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Çorap Tipi</FormLabel>
-                            <FormControl><Input {...field} placeholder="Artikel seçince dolar" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
+                            <FormControl><Input {...field} placeholder="Artikel seçince dolacak" disabled={isConfirmed} className="h-9 bg-gray-50" readOnly /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
