@@ -8,12 +8,12 @@ export interface OrderCounter {
   lastSeq: number;
 }
 
-// Numune sayaç tipi — her cinsiyet için ayrı sayaç
+// Numune sayaç tipi — her grup kodu için ayrı sayaç
 export interface NumuneCounter {
   id?: number;
   year: number;          // Tam yıl: 2026
-  cinsiyetKodu: string;  // "1"-"6" cinsiyet kodu
-  lastSira: string;      // Son sıra: "A0" (başlangıç), "A1", "A9", "B1", ... "Z9"
+  cinsiyetKodu: string;  // "0"-"9" grup kodu
+  lastSira: string;      // Son kullanılan sıra: "" (henüz yok), "A0", "A1", ... "Z9"
 }
 
 export class OysDatabase extends Dexie {
@@ -154,25 +154,28 @@ export async function setOrderCounter(newSeq: number): Promise<void> {
 // ============================================
 // NUMUNE NUMARASI SAYAÇ FONKSİYONLARI
 // ============================================
-// Format: [CİNSİYET_KODU][YIL_SON_HANE][HARF][SAYI]
-// Örnek: 15A1, 25B3, 36C9
-// Sıra ilerleyişi: A1→A2→...→A9→B1→B2→...→Z9
+// Format: [GRUP_KODU][YIL_SON_HANE][HARF][SAYI]
+// Örnek: 16A0, 26B3, 36C9
+// Sıra ilerleyişi: A0→A1→...→A9→B0→B1→...→Z9
+// Harfler: A-Z (İngilizce alfabe)
+// Rakamlar: 0-9
+// Her grup için kapasite: 26 × 10 = 260
 // ============================================
 
 /**
  * Bir sonraki numune sırasını hesapla
- * A0 → A1, A9 → B1, Z9 → A1 (wrap)
+ * "" → A0 (ilk numune), A9 → B0, Z9 → A0 (wrap)
  */
 function nextSira(current: string): string {
-  // Geçersiz format koruması — varsayılan A0
+  // Boş veya geçersiz → ilk numune A0
   if (!current || !/^[A-Z]\d$/.test(current)) {
-    return 'A1';
+    return 'A0';
   }
   let harf = current.charAt(0);
   let sayi = parseInt(current.slice(1), 10);
   sayi++;
   if (sayi > 9) {
-    sayi = 1;
+    sayi = 0;
     harf = String.fromCharCode(harf.charCodeAt(0) + 1);
     if (harf > 'Z') harf = 'A';
   }
@@ -181,24 +184,26 @@ function nextSira(current: string): string {
 
 /**
  * Sıra stringini sayısal index'e çevir (çakışma kontrolü için)
- * A1=1, A2=2, ... A9=9, B1=10, B2=11, ... Z9=234
+ * "" → -1 (henüz kullanılmadı)
+ * A0=0, A1=1, ... A9=9, B0=10, B1=11, ... Z9=259
  */
 function siraToIndex(sira: string): number {
-  if (!sira || !/^[A-Z]\d$/.test(sira)) return 0;
+  if (!sira || !/^[A-Z]\d$/.test(sira)) return -1;
   const harf = sira.charAt(0);
   const sayi = parseInt(sira.slice(1), 10);
-  return (harf.charCodeAt(0) - 65) * 9 + sayi;
+  return (harf.charCodeAt(0) - 65) * 10 + sayi;
 }
 
-/** Maksimum sıra sayısı: 26 harf × 9 rakam = 234 (A1'den Z9'a) */
-const MAX_SIRA_COUNT = 234;
+/** Maksimum sıra sayısı: 26 harf × 10 rakam = 260 (A0'dan Z9'a) */
+const MAX_SIRA_COUNT = 260;
 
 /**
  * Numune numarası üret (önizleme — sayacı ilerletmez)
- * cinsiyetKodu: "1"-"6"
- * Dönen format: [cinsiyetKodu][yılSonHane][harf][sayı] → ör. "16A1"
+ * cinsiyetKodu: "0"-"9"
+ * Dönen format: [grupKodu][yılSonHane][harf][sayı] → ör. "16A0"
  *
- * Her cinsiyet kendi bağımsız sıra sayacına sahiptir.
+ * Her grup kodu kendi bağımsız sıra sayacına sahiptir.
+ * Yıl değişince her grup A0'dan yeniden başlar.
  * NOT: Bu fonksiyon sayacı güncellemez. Kayıt sırasında
  * commitNumuneSira() çağrılarak sayaç kalıcı olarak ilerletilmelidir.
  */
@@ -212,17 +217,17 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
     localStorage.removeItem('oys_numune_sira');
   }
 
-  // Cinsiyet bazlı sayacı al veya oluştur
+  // Grup bazlı sayacı al veya oluştur
   let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
   if (!counter) {
-    const id = await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: 'A0' });
-    counter = { id: id as number, year: currentYear, cinsiyetKodu, lastSira: 'A0' };
+    const id = await db.numuneCounter.add({ year: currentYear, cinsiyetKodu, lastSira: '' });
+    counter = { id: id as number, year: currentYear, cinsiyetKodu, lastSira: '' };
   }
 
   // Bir sonraki sırayı hesapla
   const yeniSira = nextSira(counter.lastSira);
 
-  // Çakışma kontrolü: mevcut numune listesindeki aynı cinsiyet+yıl numaraları
+  // Çakışma kontrolü: mevcut numune listesindeki aynı grup+yıl numaraları
   const mevcutListe = JSON.parse(localStorage.getItem('oys_numune_listesi') || '[]');
   const usedSiras = new Set(
     mevcutListe
@@ -245,17 +250,17 @@ export async function generateNumuneNo(cinsiyetKodu: string): Promise<string> {
 
 /**
  * Numune kaydedildikten sonra sayacı kalıcı olarak ilerlet.
- * numuneNo: kaydedilen numune numarası (ör. "16A1")
- * 1. karakterden cinsiyet kodu, kalan kısımdan sırayı çıkarıp
- * ilgili cinsiyetin sayacını günceller.
+ * numuneNo: kaydedilen numune numarası (ör. "16A0")
+ * 1. karakterden grup kodu, kalan kısımdan sırayı çıkarıp
+ * ilgili grubun sayacını günceller.
  */
 export async function commitNumuneSira(numuneNo: string): Promise<void> {
   if (!numuneNo || numuneNo.length < 3) return;
-  const cinsiyetKodu = numuneNo.charAt(0); // "16A1" → "1"
-  const sira = numuneNo.slice(2); // "16A1" → "A1"
+  const cinsiyetKodu = numuneNo.charAt(0); // "16A0" → "1"
+  const sira = numuneNo.slice(2); // "16A0" → "A0"
   // Geçersiz format koruması
   if (!/^[A-Z]\d$/.test(sira)) return;
-  if (!/^[1-6]$/.test(cinsiyetKodu)) return;
+  if (!/^\d$/.test(cinsiyetKodu)) return;
   const currentYear = new Date().getFullYear();
   let counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
   if (counter) {
@@ -269,16 +274,16 @@ export async function commitNumuneSira(numuneNo: string): Promise<void> {
 }
 
 /**
- * Belirli bir cinsiyetin mevcut yıldaki numune sayacını oku
+ * Belirli bir grubun mevcut yıldaki numune sayacını oku
  */
 export async function getNumuneCounter(cinsiyetKodu: string): Promise<string> {
   const currentYear = new Date().getFullYear();
   const counter = await db.numuneCounter.where('[year+cinsiyetKodu]').equals([currentYear, cinsiyetKodu]).first();
-  return counter?.lastSira || 'A0';
+  return counter?.lastSira || '';
 }
 
 /**
- * Belirli bir cinsiyetin mevcut yıldaki numune sayacını elle güncelle
+ * Belirli bir grubun mevcut yıldaki numune sayacını elle güncelle
  */
 export async function setNumuneCounter(cinsiyetKodu: string, newSira: string): Promise<void> {
   const currentYear = new Date().getFullYear();

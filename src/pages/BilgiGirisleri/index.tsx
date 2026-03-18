@@ -66,9 +66,9 @@ export default function BilgiGirisleri() {
   const [editingSeq, setEditingSeq] = useState(false);
   const [tempSeq, setTempSeq] = useState('');
 
-  // Numune sıra sayacı — cinsiyet bazlı
+  // Numune sıra sayacı — grup bazlı
   const [selectedCinsiyet, setSelectedCinsiyet] = useState<string>('1');
-  const [numuneSira, setNumuneSira] = useState<string>('A0');
+  const [numuneSira, setNumuneSira] = useState<string>('');
   const [editingNumuneSira, setEditingNumuneSira] = useState(false);
   const [tempNumuneSira, setTempNumuneSira] = useState('');
 
@@ -94,10 +94,10 @@ export default function BilgiGirisleri() {
   const tipCount = items.filter(i => i.lookupType === 'TIP').length;
   const cinsiyetCount = items.filter(i => i.lookupType === 'CINSIYET').length;
 
-  // Numune sıra sayacını kaydet — [A-Z][0-9] formatında doğrulama
+  // Numune sıra sayacını kaydet — boş veya [A-Z][0-9] formatında doğrulama
   const saveNumuneSira = () => {
-    const val = tempNumuneSira || 'A0';
-    if (/^[A-Z]\d$/.test(val)) {
+    const val = tempNumuneSira;
+    if (val === '' || /^[A-Z]\d$/.test(val)) {
       setNumuneCounter(selectedCinsiyet, val).then(() => { setNumuneSira(val); setEditingNumuneSira(false); });
     }
   };
@@ -316,6 +316,10 @@ export default function BilgiGirisleri() {
                     <option value="4">4 - Bebek</option>
                     <option value="5">5 - Unisex</option>
                     <option value="6">6 - Külotlu</option>
+                    <option value="7">7 - Erkek 2</option>
+                    <option value="8">8 - Kadın 2</option>
+                    <option value="9">9 - Bebek-Çocuk 2</option>
+                    <option value="0">0 - Unisex 2</option>
                   </select>
                   {editingNumuneSira ? (
                     <>
@@ -344,7 +348,7 @@ export default function BilgiGirisleri() {
                     </>
                   ) : (
                     <>
-                      <span className="text-2xl font-bold text-indigo-900">{numuneSira}</span>
+                      <span className="text-2xl font-bold text-indigo-900">{numuneSira || '-'}</span>
                       <Button size="sm" variant="ghost" onClick={() => { setTempNumuneSira(numuneSira); setEditingNumuneSira(true); }} title="Düzenle">
                         <Edit3 className="w-4 h-4 text-indigo-600" />
                       </Button>
