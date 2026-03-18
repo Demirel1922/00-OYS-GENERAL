@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, FileText, Mail, Eye } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { tr as trBase } from '../../../utils/pdfHelpers';
 
 interface MeasurementRow {
   bedenler?: string;
@@ -117,17 +118,8 @@ export function NumuneDetayModal({ isOpen, onClose, numuneId }: NumuneDetayModal
   if (!isOpen || !data) return null;
 
   const generatePDF = () => {
-    // Türkçe karakter normalize fonksiyonu (jsPDF Helvetica UTF-8 desteklemez)
-    const tr = (s?: string | null): string => {
-      if (!s) return '-';
-      return s
-        .replace(/ş/g, 's').replace(/Ş/g, 'S')
-        .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
-        .replace(/ü/g, 'u').replace(/Ü/g, 'U')
-        .replace(/ö/g, 'o').replace(/Ö/g, 'O')
-        .replace(/ç/g, 'c').replace(/Ç/g, 'C')
-        .replace(/ı/g, 'i').replace(/İ/g, 'I');
-    };
+    // Türkçe karakter normalize — pdfHelpers.tr() kullanır, null/undefined için '-' döner
+    const tr = (s?: string | null): string => s ? trBase(s) : '-';
 
     const doc = new jsPDF('p', 'mm', 'a4');
     const PW = 210; // A4 genislik
