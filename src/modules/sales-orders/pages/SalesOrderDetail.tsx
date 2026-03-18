@@ -198,7 +198,7 @@ export function SalesOrderDetail() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 font-medium">Ürün</th>
-                      <th className="text-left py-3 px-4 font-medium">Cinsiyet</th>
+                      <th className="text-left py-3 px-4 font-medium">Çorap Grubu</th>
                       <th className="text-left py-3 px-4 font-medium">Tip</th>
                       <th className="text-left py-3 px-4 font-medium">Renk</th>
                       <th className="text-left py-3 px-4 font-medium">Beden</th>

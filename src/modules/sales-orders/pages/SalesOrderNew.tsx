@@ -475,7 +475,7 @@ export function SalesOrderNew() {
                           </div>
                           <div className="flex-1 grid grid-cols-2 md:grid-cols-10 gap-2 text-sm">
                             <div><span className="text-gray-500 text-xs block">Ürün</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Cinsiyet</span><span>{watchedLine?.gender || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{watchedLine?.gender || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Tip</span><span>{watchedLine?.sock_type || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Renk</span><span>{watchedLine?.color || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Beden</span><span>{watchedLine?.size || '-'}</span></div>
@@ -500,7 +500,7 @@ export function SalesOrderNew() {
                         /* Onaylanmamış kalem — düzenleme formu */
                         <>
                       <div className="space-y-3">
-                        {/* Satır 1: Ürün, Cinsiyet, Tip, Renk, Beden */}
+                        {/* Satır 1: Ürün, Çorap Grubu, Tip, Renk, Beden */}
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         {/* Urun Adi */}
                         <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
@@ -511,10 +511,10 @@ export function SalesOrderNew() {
                           </FormItem>
                         )} />
 
-                        {/* Cinsiyet */}
+                        {/* Çorap Grubu */}
                         <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cinsiyet</FormLabel>
+                            <FormLabel>Çorap Grubu</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
                               <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                               <SelectContent>
@@ -525,7 +525,7 @@ export function SalesOrderNew() {
                           </FormItem>
                         )} />
 
-                        {/* Madde 3: Tip (Cinsiyet ile Renk arası) */}
+                        {/* Madde 3: Tip (Çorap Grubu ile Renk arası) */}
                         <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Tip</FormLabel>
