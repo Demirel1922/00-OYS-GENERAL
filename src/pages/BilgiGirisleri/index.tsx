@@ -18,7 +18,8 @@ import {
   Settings,
   CircleDot,
   Edit3,
-  Hash
+  Hash,
+  Package
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ import { useIslemTipiStore } from '@/store/islemTipiStore';
 import { useIplikDetayStore } from '@/store/iplikDetayStore';
 import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useRenkStore } from '@/store/renkStore';
+import { useArtikelStore } from '@/store/artikelStore';
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { getOrderCounter, setOrderCounter, getNumuneCounter, setNumuneCounter } from '@/lib/db';
@@ -60,6 +62,7 @@ export default function BilgiGirisleri() {
   const { detaylar, seedData: seedDetay } = useIplikDetayStore();
   const { kalinliklar, seedData: seedKalinlik } = useKalinlikStore();
   const { renkler, seedData: seedRenk } = useRenkStore();
+  const { artikeller, seedData: seedArtikeller } = useArtikelStore();
 
   // Sipariş sıra sayacı
   const [orderSeq, setOrderSeq] = useState<number>(0);
@@ -83,6 +86,7 @@ export default function BilgiGirisleri() {
     if (detaylar.length === 0) seedDetay();
     if (kalinliklar.length === 0) seedKalinlik();
     if (renkler.length === 0) seedRenk();
+    seedArtikeller();
     // Sipariş sayacını yükle
     getOrderCounter().then(setOrderSeq);
     // Numune sayacını yükle (varsayılan cinsiyet: 1 - Erkek)
@@ -154,6 +158,15 @@ export default function BilgiGirisleri() {
       route: '/module/1/iplik-tanimlari',
       color: 'bg-amber-600',
       count: islemTipleri.length + detaylar.length + kalinliklar.length + renkler.length,
+    },
+    {
+      id: 'artikel-tanimlari',
+      title: 'Artikel Tanımları',
+      description: 'Ürün/artikel tanımlarını yönetin. Kalıcı referans veri havuzu.',
+      icon: Package,
+      route: '/module/1/artikel-tanimlari',
+      color: 'bg-cyan-500',
+      count: artikeller.length,
     },
   ];
 

@@ -32,6 +32,7 @@ import Tedarikciler from '@/pages/BilgiGirisleri/Tedarikciler';
 import Depolar from '@/pages/BilgiGirisleri/Depolar';
 import GenelCorapBilgileri from '@/pages/BilgiGirisleri/GenelCorapBilgileri';
 import IplikTanimlari from '@/pages/IplikTanimlari';
+import ArtikelTanimlari from '@/pages/BilgiGirisleri/ArtikelTanimlari';
 
 // Sipariş Modülü (Modül 4a) sayfaları
 import { SalesOrdersPage } from '@/modules/sales-orders/pages/SalesOrdersPage';
@@ -162,6 +163,14 @@ function AppRoutes() {
         element={
           <ModuleProtectedRoute>
             <IplikTanimlari />
+          </ModuleProtectedRoute>
+        }
+      />
+      <Route
+        path="/module/1/artikel-tanimlari"
+        element={
+          <ModuleProtectedRoute>
+            <ArtikelTanimlari />
           </ModuleProtectedRoute>
         }
       />

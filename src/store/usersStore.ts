@@ -31,7 +31,7 @@ const DEFAULT_USERS: UserWithModules[] = [
     email: 'user@oys.com',
     fullName: 'Normal User',
     isAdmin: false,
-    modules: ['1', '1a', '1b', '1c', '1d', '1e', '1f', '2', '3', '3a', '3b', '4', '4a', '4b', '4c', '5', '6', '7', '9', '11', '11a', '11a1', '11a2', '11a3', '11a4'],
+    modules: ['1', '1a', '1b', '1c', '1d', '1e', '1f', '1g', '2', '3', '3a', '3b', '4', '4a', '4b', '4c', '5', '6', '7', '9', '11', '11a', '11a1', '11a2', '11a3', '11a4'],
     password: 'user123',
   },
 ];

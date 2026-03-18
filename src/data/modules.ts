@@ -66,6 +66,15 @@ export const MODULES: Module[] = [
     adminOnly: false,
   },
   {
+    id: '1g',
+    title: 'Artikel Tanımları',
+    description: 'Ürün/artikel tanımları — kalıcı referans veri havuzu',
+    route: '/module/1/artikel-tanimlari',
+    parent: '1',
+    hasChildren: false,
+    adminOnly: false,
+  },
+  {
     id: '2',
     title: 'Numune Yönetimi',
     description: 'Numune takibi ve yönetimi',
