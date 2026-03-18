@@ -179,7 +179,11 @@ export default function ArtikelTanimlari() {
       a.musteriArtikelNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.urunTanimi.toLowerCase().includes(searchTerm.toLowerCase())
     ),
-    (a: Artikel, f: string) => (a as Record<string, any>)[f] ?? ''
+    (a: Artikel, f: string) => {
+      const key = f as keyof Artikel;
+      const val = a[key];
+      return typeof val === 'string' ? val : '';
+    }
   );
 
   return (

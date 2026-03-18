@@ -181,7 +181,7 @@ export const useArtikelStore = create<ArtikelState>()(
         const { artikeller } = get();
         if (artikeller.length > 0) {
           // Mevcut kayıtlara durum yoksa AKTIF ekle
-          const updated = artikeller.map((a: any) => ({ ...a, durum: a.durum || 'AKTIF' }));
+          const updated = artikeller.map((a: Artikel) => ({ ...a, durum: a.durum || 'AKTIF' }));
           set({ artikeller: updated });
           return;
         }
