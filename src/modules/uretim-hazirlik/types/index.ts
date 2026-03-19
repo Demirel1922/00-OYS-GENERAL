@@ -19,7 +19,7 @@ export interface IplikSatiri {
   iplikYeri: string;       // Mekik Tanımı (dropdown, 79 adet)
   mekikKodu: string;       // Z-1..Z-EXTRA, D-1-1..D-6-3, L-1, L-2
   denye: string;           // İplik numarası
-  kat: string;             // 1-50+
+  kat: string;             // 1-8
   iplikCinsi: string;      // 28 adet cins
   iplikTanimi: string;     // Serbest metin
   renk: string;

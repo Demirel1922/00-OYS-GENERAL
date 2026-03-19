@@ -101,7 +101,7 @@ export function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, 
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <FormField label="Ürün Tanımı" required>
-          <FieldInput value={k.urunTanimi} onChange={v => updateField('urunTanimi', v)} disabled={locked} />
+          <FieldInput value={k.urunTanimi} onChange={v => updateField('urunTanimi', v)} disabled={true} />
         </FormField>
         <FormField label="Müşteri Kodu" required>
           <LookupSelect value={k.musteriKodu} onChange={v => updateField('musteriKodu', v)} options={musteriOptions} disabled={locked} />
