@@ -119,4 +119,4 @@ export const TEDARIKCILER = [
 ];
 
 // KAT değerleri
-export const KAT_DEGERLERI = Array.from({length: 50}, (_, i) => String(i + 1));
+export const KAT_DEGERLERI = Array.from({length: 8}, (_, i) => String(i + 1));

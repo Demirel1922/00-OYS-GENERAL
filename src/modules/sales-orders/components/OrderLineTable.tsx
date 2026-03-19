@@ -154,7 +154,7 @@ export function OrderLineTable({
               <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
                 <FormItem>
                   <FormLabel>Ürün Tanımı</FormLabel>
-                  <FormControl><Input {...field} placeholder="Artikel seçin" disabled={isConfirmed || !!watchedLine?.artikel_no} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
+                  <FormControl><Input {...field} placeholder="Artikel seçin" disabled={true} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
