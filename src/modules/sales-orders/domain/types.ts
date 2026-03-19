@@ -100,21 +100,33 @@ const CINSIYET_CODE_MAP: Record<string, string> = {
 };
 
 const CORAP_TIPI_CODE_MAP: Record<string, string> = {
-  'PATIK': 'Patik', 'KISA_KONC': 'Kısa Konç', 'NORMAL_KONC': 'Normal Konç',
-  'CETIK': 'Çetik', 'DIZALTI': 'Dizaltı', 'DIZUSTU': 'Dizüstü',
+  // Enum kodları → kanonik label
+  'PATIK': 'Patik Çorap', 'KISA_KONC': 'Kısa Çorap', 'NORMAL_KONC': 'Orta Boy Çorap',
+  'CETIK': 'Çetik', 'DIZALTI': 'Diz Altı Çorap', 'DIZUSTU': 'Diz Üstü Çorap',
   'KULOTLU': 'Külotlu Çorap',
+  // Legacy kısa isimler → kanonik label
+  'Patik': 'Patik Çorap', 'Kısa Konç': 'Kısa Çorap', 'Normal Konç': 'Orta Boy Çorap',
+  'Dizaltı': 'Diz Altı Çorap', 'Dizüstü': 'Diz Üstü Çorap',
+  // Kanonik label'lar → kendisi (idempotent)
+  'Patik Çorap': 'Patik Çorap', 'Kısa Çorap': 'Kısa Çorap', 'Orta Boy Çorap': 'Orta Boy Çorap',
+  'Çetik': 'Çetik', 'Diz Altı Çorap': 'Diz Altı Çorap', 'Diz Üstü Çorap': 'Diz Üstü Çorap',
+  'Külotlu Çorap': 'Külotlu Çorap', 'Tayt': 'Tayt', 'Çorap Tayt': 'Çorap Tayt',
 };
 
-/** Ham cinsiyet kodu veya adını okunabilir label'a çevirir */
+/** Ham cinsiyet kodu veya adını kanonik label'a çevirir */
 export function resolveGenderLabel(value: string | undefined | null): string {
   if (!value) return '-';
-  return CINSIYET_CODE_MAP[value] || value;
+  const trimmed = value.trim();
+  if (!trimmed) return '-';
+  return CINSIYET_CODE_MAP[trimmed] || trimmed;
 }
 
-/** Ham çorap tipi kodu veya adını okunabilir label'a çevirir */
+/** Ham çorap tipi kodu veya adını kanonik label'a çevirir */
 export function resolveSockTypeLabel(value: string | undefined | null): string {
   if (!value) return '-';
-  return CORAP_TIPI_CODE_MAP[value] || SOCK_TYPE_LABELS[value] || value;
+  const trimmed = value.trim();
+  if (!trimmed) return '-';
+  return CORAP_TIPI_CODE_MAP[trimmed] || trimmed;
 }
 
 export const PRICE_UNITS = [
