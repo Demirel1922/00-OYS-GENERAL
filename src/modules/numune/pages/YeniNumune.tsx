@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI,
+  IGNE_SAYILARI, CAP_DEGERLERI,
 } from '../../uretim-hazirlik/constants/lookups';
 import { useRenkStore } from '@/store/renkStore';
 import { useIplikDetayStore } from '@/store/iplikDetayStore';
@@ -21,6 +21,7 @@ import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
 import { useLookupStore } from '@/store/lookupStore';
 import { useArtikelStore } from '@/store/artikelStore';
+import { useMusteriStore } from '@/store/musteriStore';
 import { generateNumuneNo, commitNumuneSira } from '@/lib/db';
 
 interface MeasurementRow {
@@ -208,6 +209,9 @@ export function YeniNumune() {
   const { tedarikciler, seedData: seedTedarikci } = useTedarikciStore();
   const { kategoriler: tedarikciKategorileri, seedData: seedTedarikciKategori } = useTedarikciKategoriStore();
 
+  // Müşteri store entegrasyonu (Bilgi Tanımları > Müşteriler)
+  const { musteriler, seedData: seedMusteri } = useMusteriStore();
+
   // FAZ 2B: Artikel store entegrasyonu
   const { addArtikelFromNumune } = useArtikelStore();
 
@@ -216,9 +220,11 @@ export function YeniNumune() {
     if (kalinliklar.length === 0) seedKalinlik();
     if (tedarikciler.length === 0) seedTedarikci();
     if (tedarikciKategorileri.length === 0) seedTedarikciKategori();
+    if (musteriler.length === 0) seedMusteri();
   }, []);
 
   const aktifIplikDetaylar = useMemo(() => iplikDetaylar.filter(d => d.durum === 'AKTIF'), [iplikDetaylar]);
+  const aktifMusteriler = useMemo(() => musteriler.filter(m => m.durum === 'AKTIF'), [musteriler]);
   const aktifKalinliklar = useMemo(
     () => kalinliklar.filter(k => k.durum === 'AKTIF').map(k => ({ ...k, gosterim: getBirlesikGosterim(k) })),
     [kalinliklar, getBirlesikGosterim]
@@ -649,7 +655,7 @@ export function YeniNumune() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Grubu *</label>
-                <select value={formData.generalInfo.cinsiyet} onChange={(e) => handleGeneralChange('cinsiyet', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
+                <select value={formData.generalInfo.cinsiyet} onChange={(e) => handleGeneralChange('cinsiyet', e.target.value)} disabled={isEditMode} className={`w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}>
                   <option value="">Seçiniz</option>
                   {CINSIYET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
@@ -676,7 +682,7 @@ export function YeniNumune() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Müşteri Kodu *</label>
                 <select value={formData.generalInfo.musteriKodu} onChange={(e) => handleGeneralChange('musteriKodu', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
                   <option value="">Seçiniz</option>
-                  {MUSTERI_KODLARI.map(o => <option key={o} value={o}>{o}</option>)}
+                  {aktifMusteriler.map(m => <option key={m.id} value={m.ormeciMusteriNo}>{m.ormeciMusteriNo} - {m.musteriKisaKod}</option>)}
                 </select>
               </div>
               <div>

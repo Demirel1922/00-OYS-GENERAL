@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, CheckCircle, Truck, Ban, FileText, AlertCircle } from 'lucide-react';
 import type { OrderStatus } from '@/modules/sales-orders/domain/types';
-import { STATUS_LABELS, PRICE_UNIT_LABELS, SOCK_TYPE_LABELS } from '@/modules/sales-orders/domain/types';
+import { STATUS_LABELS, PRICE_UNIT_LABELS, SOCK_TYPE_LABELS, resolveGenderLabel, resolveSockTypeLabel } from '@/modules/sales-orders/domain/types';
 import { useLookupStore } from '@/store/lookupStore';
 import { formatMoney2, formatDate, formatQuantity } from '@/modules/sales-orders/utils/format';
 import { parsePriceString, canTransitionStatus, approveOrder, shipOrder, cancelOrder } from '@/modules/sales-orders/services/orderService';
@@ -217,8 +217,8 @@ export function SalesOrderDetail() {
                         <tr key={line.id || index} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 font-mono">{line.artikel_no || '-'}</td>
                           <td className="py-3 px-4">{line.product_name}</td>
-                          <td className="py-3 px-4">{line.gender || '-'}</td>
-                          <td className="py-3 px-4">{SOCK_TYPE_LABELS[line.sock_type] || line.sock_type || ''}</td>
+                          <td className="py-3 px-4">{resolveGenderLabel(line.gender)}</td>
+                          <td className="py-3 px-4">{resolveSockTypeLabel(line.sock_type)}</td>
                           <td className="py-3 px-4">{line.color}</td>
                           <td className="py-3 px-4">{line.size}</td>
                           <td className="py-3 px-4 text-right">{formatQuantity(line.quantity)}</td>

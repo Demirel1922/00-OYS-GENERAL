@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, pdf, Font } from '@react-pdf/renderer';
 import type { SalesOrder } from '@/modules/sales-orders/domain/types';
+import { resolveGenderLabel, resolveSockTypeLabel } from '@/modules/sales-orders/domain/types';
 import { useLookupStore as useLookupStoreRef } from '@/store/lookupStore';
 
 // ----- FONT TANIMLAMA (Türkçe karakterler için Noto Sans) -----
@@ -145,8 +146,8 @@ function OrderPDFDocument({ order }: { order: SalesOrder }) {
   };
 
   // Artık değerler doğrudan Türkçe string olarak geliyor (store'dan)
-  const getGender = (v: string) => v || '-';
-  const getSockType = (v: string) => v || '-';
+  const getGender = (v: string) => resolveGenderLabel(v);
+  const getSockType = (v: string) => resolveSockTypeLabel(v);
   const getUnit = (v: string) => {
     // lookupStore'dan birim adını al
     try {

@@ -14,7 +14,7 @@ import {
 } from '../utils/calculations';
 import { createEmptyIplikSatiri, createEmptyOlcuSatiri, createEmptyGramajSatiri } from '../utils/factory';
 import {
-  MUSTERI_KODLARI, IGNE_SAYILARI, CAP_DEGERLERI, KALINLIK_DEGERLERI,
+  IGNE_SAYILARI, CAP_DEGERLERI, KALINLIK_DEGERLERI,
   MAKINE_MODELLERI, YIKAMA_TIPLERI, BURUN_DIKIS_TIPLERI, HAZIRLAYANLAR,
   MEKIK_TANIMLARI, MEKIK_KODLARI, KAT_DEGERLERI,
 } from '../constants/lookups';
@@ -24,6 +24,7 @@ import { useIplikDetayStore } from '@/store/iplikDetayStore';
 import { useKalinlikStore } from '@/store/kalinlikStore';
 import { useTedarikciStore } from '@/store/tedarikciStore';
 import { useTedarikciKategoriStore } from '@/store/tedarikciKategoriStore';
+import { useMusteriStore } from '@/store/musteriStore';
 
 type TabKey = 'urun' | 'gramaj' | 'yikama' | 'forma' | 'makina' | 'onay';
 
@@ -442,6 +443,7 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
   const { kalinliklar, seedData: seedKalinlik, getBirlesikGosterim } = useKalinlikStore();
   const { tedarikciler, seedData: seedTedarikci } = useTedarikciStore();
   const { kategoriler: tedarikciKategorileri, seedData: seedTedarikciKategori } = useTedarikciKategoriStore();
+  const { musteriler, seedData: seedMusteri } = useMusteriStore();
 
   useEffect(() => {
     if (lookupItems.length === 0) seedLookup();
@@ -450,7 +452,13 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
     if (kalinliklar.length === 0) seedKalinlik();
     if (tedarikciler.length === 0) seedTedarikci();
     if (tedarikciKategorileri.length === 0) seedTedarikciKategori();
+    if (musteriler.length === 0) seedMusteri();
   }, []);
+
+  const musteriOptions = useMemo(() =>
+    musteriler.filter(m => m.durum === 'AKTIF').map(m => m.ormeciMusteriNo),
+    [musteriler]
+  );
 
   const boyOptions = useMemo(() =>
     getSortedItemsByType('BEDEN').map(item => ({ value: item.ad, label: item.ad })),
@@ -505,7 +513,7 @@ function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, addIpli
           <FieldInput value={k.urunTanimi} onChange={v => updateField('urunTanimi', v)} disabled={locked} />
         </FormField>
         <FormField label="Müşteri Kodu" required>
-          <LookupSelect value={k.musteriKodu} onChange={v => updateField('musteriKodu', v)} options={MUSTERI_KODLARI} disabled={locked} />
+          <LookupSelect value={k.musteriKodu} onChange={v => updateField('musteriKodu', v)} options={musteriOptions} disabled={locked} />
         </FormField>
         <FormField label="Örmeci Artikel Kodu" required>
           <FieldInput value={k.ormeciArtikelKodu} onChange={v => updateField('ormeciArtikelKodu', v)} disabled={locked} />

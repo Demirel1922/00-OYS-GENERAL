@@ -51,7 +51,7 @@ export function ArtikelCombobox({ artikeller, value, onSelect, disabled }: Artik
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <PopoverContent className="min-w-[340px] w-[--radix-popover-trigger-width] p-0 z-[99]" align="start" sideOffset={4}>
           <Command
             filter={(value, search) => {
               const artikel = aktifArtikeller.find(a => a.id === value);
@@ -67,8 +67,8 @@ export function ArtikelCombobox({ artikeller, value, onSelect, disabled }: Artik
               return searchable.includes(searchLower) ? 1 : 0;
             }}
           >
-            <CommandInput placeholder="Artikel ara..." />
-            <CommandList>
+            <CommandInput placeholder="Artikel ara..." className="h-9" />
+            <CommandList className="max-h-[220px]">
               <CommandEmpty>Artikel bulunamadı.</CommandEmpty>
               <CommandGroup>
                 {aktifArtikeller.map((artikel) => (
@@ -82,16 +82,16 @@ export function ArtikelCombobox({ artikeller, value, onSelect, disabled }: Artik
                   >
                     <Check
                       className={cn(
-                        'mr-2 h-4 w-4',
+                        'mr-2 h-4 w-4 shrink-0',
                         value === (artikel.ormeciArtikelNo || '') ? 'opacity-100' : 'opacity-0'
                       )}
                     />
                     <div className="flex flex-col flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-medium text-sm">{artikel.ormeciArtikelNo || artikel.numuneNo || '-'}</span>
+                        <span className="font-mono font-medium text-sm whitespace-nowrap">{artikel.ormeciArtikelNo || artikel.numuneNo || '-'}</span>
                         <span className="text-xs text-gray-500 truncate">{artikel.urunTanimi || '-'}</span>
                       </div>
-                      <div className="flex gap-2 text-xs text-gray-400">
+                      <div className="flex gap-2 text-xs text-gray-400 truncate">
                         {artikel.corapGrubu && <span>{artikel.corapGrubu}</span>}
                         {artikel.corapTipi && <span>• {artikel.corapTipi}</span>}
                         {artikel.musteriKodu && <span>• Müş: {artikel.musteriKodu}</span>}
