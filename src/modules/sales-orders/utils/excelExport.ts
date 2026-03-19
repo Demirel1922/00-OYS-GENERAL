@@ -85,7 +85,7 @@ export async function exportOrderToExcel(order: SalesOrder): Promise<void> {
   worksheet.addRow(['Toplam Tutar', formatMoneyRaw(order.total_amount)]);
   worksheet.addRow([]);
 
-  const headers = ['Ürün', 'Çorap Grubu', 'Renk', 'Beden', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam Çift', 'Tutar'];
+  const headers = ['Örmeci Artikel No', 'Ürün Tanımı', 'Çorap Grubu', 'Çorap Tipi', 'Renk', 'Beden', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam Çift', 'Tutar'];
   worksheet.addRow(headers);
   
   const headerRow = worksheet.getRow(worksheet.rowCount);
@@ -98,8 +98,10 @@ export async function exportOrderToExcel(order: SalesOrder): Promise<void> {
 
   order.lines.forEach((line) => {
     worksheet.addRow([
+      (line as any).artikel_no || '-',
       line.product_name,
       line.gender,
+      line.sock_type || '',
       line.color,
       line.size,
       line.quantity,

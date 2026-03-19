@@ -15,6 +15,9 @@ interface NumuneArtikelData {
   musteriKodu: string;
   musteriArtikelNo: string;
   urunTanimi: string;
+  ormeciArtikelNo: string;
+  corapGrubu: string;
+  corapTipi: string;
 }
 
 // FAZ 2B: Aktarım sonucu
@@ -80,7 +83,13 @@ export const useArtikelStore = create<ArtikelState>()(
 
         const newArtikel: Artikel = {
           id: generateId(),
-          ...data,
+          ormeciArtikelNo: data.ormeciArtikelNo || '',
+          numuneNo: data.numuneNo,
+          musteriKodu: data.musteriKodu,
+          musteriArtikelNo: data.musteriArtikelNo,
+          urunTanimi: data.urunTanimi,
+          corapGrubu: data.corapGrubu || '',
+          corapTipi: data.corapTipi || '',
           kaynak: 'manuel',
           durum: 'AKTIF',
           numuneId: null,
@@ -99,7 +108,7 @@ export const useArtikelStore = create<ArtikelState>()(
       // ============================================
       addArtikelFromNumune: (data) => {
         const { artikeller } = get();
-        const { numuneId, numuneNo, musteriKodu, musteriArtikelNo, urunTanimi } = data;
+        const { numuneId, numuneNo, musteriKodu, musteriArtikelNo, urunTanimi, ormeciArtikelNo, corapGrubu, corapTipi } = data;
 
         // Katman 1: numuneId eşleşmesi → aynı numune zaten aktarılmış, atla
         const numuneIdMatch = artikeller.find(a => a.numuneId === numuneId);
@@ -155,10 +164,13 @@ export const useArtikelStore = create<ArtikelState>()(
         // Eşleşme yok → yeni artikel kaydı oluştur (snapshot)
         const newArtikel: Artikel = {
           id: generateId(),
+          ormeciArtikelNo: ormeciArtikelNo || numuneNo || '',
           numuneNo,
           musteriKodu,
           musteriArtikelNo,
           urunTanimi,
+          corapGrubu: corapGrubu || '',
+          corapTipi: corapTipi || '',
           kaynak: 'numune',
           durum: 'AKTIF',
           numuneId,
@@ -277,8 +289,14 @@ export const useArtikelStore = create<ArtikelState>()(
       seedData: () => {
         const { artikeller } = get();
         if (artikeller.length > 0) {
-          // Mevcut kayıtlara durum yoksa AKTIF ekle
-          const updated = artikeller.map((a: Artikel) => ({ ...a, durum: a.durum || 'AKTIF' }));
+          // Mevcut kayıtlara eksik alanları varsayılan değerlerle ekle (geriye dönük uyumluluk)
+          const updated = artikeller.map((a: Artikel) => ({
+            ...a,
+            durum: a.durum || 'AKTIF',
+            ormeciArtikelNo: a.ormeciArtikelNo || a.numuneNo || '',
+            corapGrubu: a.corapGrubu || '',
+            corapTipi: a.corapTipi || '',
+          }));
           set({ artikeller: updated });
           return;
         }
