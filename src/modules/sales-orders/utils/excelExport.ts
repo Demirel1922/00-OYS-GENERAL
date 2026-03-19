@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import type { SalesOrder } from '@/modules/sales-orders/domain/types';
-import { STATUS_LABELS } from '@/modules/sales-orders/domain/types';
+import { STATUS_LABELS, resolveGenderLabel, resolveSockTypeLabel } from '@/modules/sales-orders/domain/types';
 import { formatDate, formatMoneyRaw } from './format';
 
 export async function exportOrdersToExcel(orders: SalesOrder[]): Promise<void> {
@@ -100,8 +100,8 @@ export async function exportOrderToExcel(order: SalesOrder): Promise<void> {
     worksheet.addRow([
       (line as any).artikel_no || '-',
       line.product_name,
-      line.gender,
-      line.sock_type || '',
+      resolveGenderLabel(line.gender),
+      resolveSockTypeLabel(line.sock_type),
       line.color,
       line.size,
       line.quantity,

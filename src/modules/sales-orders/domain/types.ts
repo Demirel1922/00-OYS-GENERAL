@@ -86,6 +86,37 @@ export const GENDER_LABELS_EN: Record<string, string> = {
   Unisex: 'Unisex',
 };
 
+// ============================================
+// DISPLAY LABEL RESOLVERS
+// ============================================
+// Numune modülü cinsiyet kodları ('1','2'...) ve çorap tipi kodları ('PATIK','KISA_KONC'...)
+// Sipariş ekranlarında kullanıcıya okunabilir isim olarak gösterilmeli.
+// Eğer değer zaten okunabilir (lookupStore ad değeri) ise aynen döner.
+
+const CINSIYET_CODE_MAP: Record<string, string> = {
+  '1': 'Erkek', '2': 'Kadın', '3': 'Çocuk', '4': 'Bebek',
+  '5': 'Unisex', '6': 'Külotlu', '7': 'Erkek 2', '8': 'Kadın 2',
+  '9': 'Bebek-Çocuk 2', '0': 'Unisex 2',
+};
+
+const CORAP_TIPI_CODE_MAP: Record<string, string> = {
+  'PATIK': 'Patik', 'KISA_KONC': 'Kısa Konç', 'NORMAL_KONC': 'Normal Konç',
+  'CETIK': 'Çetik', 'DIZALTI': 'Dizaltı', 'DIZUSTU': 'Dizüstü',
+  'KULOTLU': 'Külotlu Çorap',
+};
+
+/** Ham cinsiyet kodu veya adını okunabilir label'a çevirir */
+export function resolveGenderLabel(value: string | undefined | null): string {
+  if (!value) return '-';
+  return CINSIYET_CODE_MAP[value] || value;
+}
+
+/** Ham çorap tipi kodu veya adını okunabilir label'a çevirir */
+export function resolveSockTypeLabel(value: string | undefined | null): string {
+  if (!value) return '-';
+  return CORAP_TIPI_CODE_MAP[value] || SOCK_TYPE_LABELS[value] || value;
+}
+
 export const PRICE_UNITS = [
   { value: 'pair', label: 'Çift' },
   { value: 'dozen', label: 'Düzine' },

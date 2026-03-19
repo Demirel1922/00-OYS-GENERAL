@@ -21,6 +21,8 @@ import {
   CURRENCIES,
   type SalesOrder,
   type SalesOrderLine,
+  resolveGenderLabel,
+  resolveSockTypeLabel,
 } from '@/modules/sales-orders/domain/types';
 import {
   normalizePriceInput,
@@ -485,8 +487,8 @@ export function SalesOrderNew() {
                           <div className="flex-1 grid grid-cols-2 md:grid-cols-11 gap-2 text-sm">
                             <div><span className="text-gray-500 text-xs block">Artikel No</span><span className="font-medium font-mono">{watchedLine?.artikel_no || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Ürün Tanımı</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{watchedLine?.gender || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Çorap Tipi</span><span>{watchedLine?.sock_type || '-'}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{resolveGenderLabel(watchedLine?.gender)}</span></div>
+                            <div><span className="text-gray-500 text-xs block">Çorap Tipi</span><span>{resolveSockTypeLabel(watchedLine?.sock_type)}</span></div>
                             <div><span className="text-gray-500 text-xs block">Renk</span><span>{watchedLine?.color || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Beden</span><span>{watchedLine?.size || '-'}</span></div>
                             <div><span className="text-gray-500 text-xs block">Miktar</span><span className="font-medium">{formatQuantity(watchedLine?.quantity ?? 0)}</span></div>
@@ -556,7 +558,7 @@ export function SalesOrderNew() {
                           <FormItem>
                             <FormLabel>Çorap Grubu</FormLabel>
                             {watchedLine?.artikel_no ? (
-                              <FormControl><Input value={field.value || ''} disabled className="h-9 text-sm" /></FormControl>
+                              <FormControl><Input value={resolveGenderLabel(field.value)} disabled className="h-9 text-sm" /></FormControl>
                             ) : (
                               <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
@@ -574,7 +576,7 @@ export function SalesOrderNew() {
                           <FormItem>
                             <FormLabel>Çorap Tipi</FormLabel>
                             {watchedLine?.artikel_no ? (
-                              <FormControl><Input value={field.value || ''} disabled className="h-9 text-sm" /></FormControl>
+                              <FormControl><Input value={resolveSockTypeLabel(field.value)} disabled className="h-9 text-sm" /></FormControl>
                             ) : (
                               <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
