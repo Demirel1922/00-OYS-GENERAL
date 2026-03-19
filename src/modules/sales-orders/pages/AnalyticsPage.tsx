@@ -11,13 +11,9 @@ import {
 import { differenceInDays, parseISO, format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import type { SalesOrder } from '@/modules/sales-orders/domain/types';
-import { STATUS_LABELS } from '@/modules/sales-orders/domain/types';
 import { formatMoney2, formatDate, formatQuantity } from '@/modules/sales-orders/utils/format';
 import { parsePriceString } from '@/modules/sales-orders/services/orderService';
 import { useSalesOrders } from '@/modules/sales-orders/hooks/useSalesOrders';
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b'];
 
 export function AnalyticsPage() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 // ============================================
 // SORTABLE TABLE - Reusable sıralama hook ve header
 // ============================================
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 export type SortDir = 'asc' | 'desc';
