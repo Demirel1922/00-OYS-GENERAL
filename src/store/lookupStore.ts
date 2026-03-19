@@ -56,6 +56,11 @@ const defaultItems: LookupItem[] = [
   { id: 'c3', lookupType: 'CINSIYET', kod: 'CINSIYET_UNISEX', ad: 'Unisex', sira: 3, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
   { id: 'c4', lookupType: 'CINSIYET', kod: 'CINSIYET_COCUK', ad: 'Çocuk', sira: 4, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
   { id: 'c5', lookupType: 'CINSIYET', kod: 'CINSIYET_BEBEK', ad: 'Bebek', sira: 5, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'c6', lookupType: 'CINSIYET', kod: 'CINSIYET_KULOTLU', ad: 'Külotlu', sira: 6, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'c7', lookupType: 'CINSIYET', kod: 'CINSIYET_ERKEK2', ad: 'Erkek 2', sira: 7, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'c8', lookupType: 'CINSIYET', kod: 'CINSIYET_KADIN2', ad: 'Kadın 2', sira: 8, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'c9', lookupType: 'CINSIYET', kod: 'CINSIYET_BEBEK_COCUK2', ad: 'Bebek-Çocuk 2', sira: 9, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'c10', lookupType: 'CINSIYET', kod: 'CINSIYET_UNISEX2', ad: 'Unisex 2', sira: 10, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
 
   // --- BİRİMLER ---
   { id: 'br1', lookupType: 'BIRIM', kod: 'BIRIM_CIFT', ad: 'Çift', sira: 1, carpan: 1, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },

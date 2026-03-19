@@ -94,9 +94,14 @@ export const GENDER_LABELS_EN: Record<string, string> = {
 // Eğer değer zaten okunabilir (lookupStore ad değeri) ise aynen döner.
 
 const CINSIYET_CODE_MAP: Record<string, string> = {
+  // Sayısal kodlar → kanonik label (eski numune kayıtları uyumu)
   '1': 'Erkek', '2': 'Kadın', '3': 'Çocuk', '4': 'Bebek',
   '5': 'Unisex', '6': 'Külotlu', '7': 'Erkek 2', '8': 'Kadın 2',
   '9': 'Bebek-Çocuk 2', '0': 'Unisex 2',
+  // Kanonik label'lar → kendisi (idempotent)
+  'Erkek': 'Erkek', 'Kadın': 'Kadın', 'Çocuk': 'Çocuk', 'Bebek': 'Bebek',
+  'Unisex': 'Unisex', 'Külotlu': 'Külotlu', 'Erkek 2': 'Erkek 2', 'Kadın 2': 'Kadın 2',
+  'Bebek-Çocuk 2': 'Bebek-Çocuk 2', 'Unisex 2': 'Unisex 2',
 };
 
 const CORAP_TIPI_CODE_MAP: Record<string, string> = {
