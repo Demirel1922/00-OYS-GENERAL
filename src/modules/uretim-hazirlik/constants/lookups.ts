@@ -19,6 +19,7 @@ export const MAKINE_MODELLERI = [
   'GK 625 Burun Kapamalı',
 ];
 
+/** @deprecated lookupStore DOKU tipi kullanılmalıdır */
 export const CORAP_OZELLIKLERI = ['Düz','Havlu','Yarım Havlu','Teknik Havlu','Seçmeli Havlu','Derbili'];
 
 export const CORAP_TIPLERI = ['Patik','Kısa Konç','Normal Konç','Çetik','Dizaltı','Dizüstü','Külotlu'];

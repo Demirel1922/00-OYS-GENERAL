@@ -111,15 +111,6 @@ const CORAP_TIPI_OPTIONS = [
   { value: 'KULOTLU', label: 'Külotlu Çorap' }
 ];
 
-const CORAP_DOKUSU_OPTIONS = [
-  { value: '', label: 'Seçiniz' },
-  { value: 'DUZ', label: 'Düz' },
-  { value: 'HAVLU', label: 'Havlu' },
-  { value: 'YARIM_HAVLU', label: 'Yarım Havlu' },
-  { value: 'TEKNIK_HAVLU', label: 'Teknik Havlu' },
-  { value: 'SECMELI_HAVLU', label: 'Seçmeli Havlu' },
-  { value: 'DERBILI', label: 'Derbili' }
-];
 
 const YIKAMA_OPTIONS = ['Var', 'Yok', 'Hafif', 'Sert'];
 const BIRIM_OPTIONS = ['Çift', 'Düzine', 'Adet'];
@@ -203,6 +194,7 @@ export function YeniNumune() {
   const { items: lookupItems, seedData: seedLookup, getSortedItemsByType } = useLookupStore();
   useEffect(() => { if (lookupItems.length === 0) seedLookup(); }, []);
   const boyListesi = useMemo(() => getSortedItemsByType('BEDEN'), [lookupItems]);
+  const dokuListesi = useMemo(() => getSortedItemsByType('DOKU'), [lookupItems]);
 
   // İplik Bilgileri store entegrasyonları
   const { detaylar: iplikDetaylar, seedData: seedIplikDetay } = useIplikDetayStore();
@@ -683,7 +675,7 @@ export function YeniNumune() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Müşteri Kodu *</label>
                 <select value={formData.generalInfo.musteriKodu} onChange={(e) => handleGeneralChange('musteriKodu', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
                   <option value="">Seçiniz</option>
-                  {aktifMusteriler.map(m => <option key={m.id} value={m.ormeciMusteriNo}>{m.ormeciMusteriNo} - {m.musteriKisaKod}</option>)}
+                  {aktifMusteriler.map(m => <option key={m.id} value={m.ormeciMusteriNo}>{m.ormeciMusteriNo}</option>)}
                 </select>
               </div>
               <div>
@@ -706,7 +698,8 @@ export function YeniNumune() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Dokusu</label>
                 <select value={formData.generalInfo.corapDokusu} onChange={(e) => handleGeneralChange('corapDokusu', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  {CORAP_DOKUSU_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <option value="">Seçiniz</option>
+                  {dokuListesi.map(d => <option key={d.id} value={d.ad}>{d.ad}</option>)}
                 </select>
               </div>
               <div>
