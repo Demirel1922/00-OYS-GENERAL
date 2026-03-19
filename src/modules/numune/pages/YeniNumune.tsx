@@ -23,6 +23,7 @@ import { useLookupStore } from '@/store/lookupStore';
 import { useArtikelStore } from '@/store/artikelStore';
 import { useMusteriStore } from '@/store/musteriStore';
 import { generateNumuneNo, commitNumuneSira } from '@/lib/db';
+import { resolveGenderLabel } from '@/modules/sales-orders/domain/types';
 
 interface MeasurementRow {
   id: number;
@@ -62,16 +63,16 @@ interface Toast {
 }
 
 const CINSIYET_OPTIONS = [
-  { value: '1', label: '1 - Erkek' },
-  { value: '2', label: '2 - Kadın' },
-  { value: '3', label: '3 - Çocuk' },
-  { value: '4', label: '4 - Bebek' },
-  { value: '5', label: '5 - Unisex' },
-  { value: '6', label: '6 - Külotlu' },
-  { value: '7', label: '7 - Erkek 2' },
-  { value: '8', label: '8 - Kadın 2' },
-  { value: '9', label: '9 - Bebek-Çocuk 2' },
-  { value: '0', label: '0 - Unisex 2' },
+  { value: '1', label: 'Erkek' },
+  { value: '2', label: 'Kadın' },
+  { value: '3', label: 'Çocuk' },
+  { value: '4', label: 'Bebek' },
+  { value: '5', label: 'Unisex' },
+  { value: '6', label: 'Külotlu' },
+  { value: '7', label: 'Erkek 2' },
+  { value: '8', label: 'Kadın 2' },
+  { value: '9', label: 'Bebek-Çocuk 2' },
+  { value: '0', label: 'Unisex 2' },
 ];
 
 const NUMUNE_TIPI_OPTIONS = [
@@ -555,7 +556,7 @@ export function YeniNumune() {
         musteriArtikelNo: formData.generalInfo.musteriArtikelKodu || '',
         urunTanimi: formData.generalInfo.corapTanimi || '',
         ormeciArtikelNo: formData.generalInfo.numuneNo || '',
-        corapGrubu: formData.generalInfo.cinsiyet || '',
+        corapGrubu: resolveGenderLabel(formData.generalInfo.cinsiyet),
         corapTipi: formData.generalInfo.corapTipi || '',
       });
       if (!result.success) {
