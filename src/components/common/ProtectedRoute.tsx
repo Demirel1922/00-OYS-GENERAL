@@ -1,6 +1,6 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { getModuleById, MODULES } from '@/data/modules';
+import { MODULES } from '@/data/modules';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -27,7 +27,7 @@ interface ModuleProtectedRouteProps {
 
 export function ModuleProtectedRoute({ children }: ModuleProtectedRouteProps) {
   const { isAuthenticated, allowedModules, isAdmin } = useAuthStore();
-  const pathname = window.location.pathname;
+  const { pathname } = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
