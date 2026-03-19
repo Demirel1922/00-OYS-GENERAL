@@ -272,7 +272,7 @@ export function SalesOrderNew() {
     return {
       order_no: '',
       customer_id: data.customer_id,
-      customer_name: customer?.musteriUnvan || '',
+      customer_name: customer?.ormeciMusteriNo || '',
       customer_po_no: data.customer_po_no,
       order_date: data.order_date,
       requested_termin: data.requested_termin,
