@@ -62,16 +62,16 @@ interface Toast {
 }
 
 const CINSIYET_OPTIONS = [
-  { value: '1', label: '1 - Erkek' },
-  { value: '2', label: '2 - Kadın' },
-  { value: '3', label: '3 - Çocuk' },
-  { value: '4', label: '4 - Bebek' },
-  { value: '5', label: '5 - Unisex' },
-  { value: '6', label: '6 - Külotlu' },
-  { value: '7', label: '7 - Erkek 2' },
-  { value: '8', label: '8 - Kadın 2' },
-  { value: '9', label: '9 - Bebek-Çocuk 2' },
-  { value: '0', label: '0 - Unisex 2' },
+  { value: '1', label: 'Erkek' },
+  { value: '2', label: 'Kadın' },
+  { value: '3', label: 'Çocuk' },
+  { value: '4', label: 'Bebek' },
+  { value: '5', label: 'Unisex' },
+  { value: '6', label: 'Külotlu' },
+  { value: '7', label: 'Erkek 2' },
+  { value: '8', label: 'Kadın 2' },
+  { value: '9', label: 'Bebek-Çocuk 2' },
+  { value: '0', label: 'Unisex 2' },
 ];
 
 const NUMUNE_TIPI_OPTIONS = [
@@ -682,7 +682,7 @@ export function YeniNumune() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Müşteri Kodu *</label>
                 <select value={formData.generalInfo.musteriKodu} onChange={(e) => handleGeneralChange('musteriKodu', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
                   <option value="">Seçiniz</option>
-                  {aktifMusteriler.map(m => <option key={m.id} value={m.ormeciMusteriNo}>{m.ormeciMusteriNo} - {m.musteriKisaKod}</option>)}
+                  {aktifMusteriler.map(m => <option key={m.id} value={m.ormeciMusteriNo}>{m.ormeciMusteriNo}</option>)}
                 </select>
               </div>
               <div>

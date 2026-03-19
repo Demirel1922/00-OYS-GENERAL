@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import type { Artikel } from '@/types';
+import { resolveGenderLabel, resolveSockTypeLabel } from '../domain/types';
 
 interface ArtikelComboboxProps {
   artikeller: Artikel[];
@@ -92,8 +93,8 @@ export function ArtikelCombobox({ artikeller, value, onSelect, disabled }: Artik
                         <span className="text-xs text-gray-500 truncate">{artikel.urunTanimi || '-'}</span>
                       </div>
                       <div className="flex gap-2 text-xs text-gray-400 truncate">
-                        {artikel.corapGrubu && <span>{artikel.corapGrubu}</span>}
-                        {artikel.corapTipi && <span>• {artikel.corapTipi}</span>}
+                        {artikel.corapGrubu && <span>{resolveGenderLabel(artikel.corapGrubu)}</span>}
+                        {artikel.corapTipi && <span>• {resolveSockTypeLabel(artikel.corapTipi)}</span>}
                         {artikel.musteriKodu && <span>• Müş: {artikel.musteriKodu}</span>}
                         {artikel.musteriArtikelNo && <span>• {artikel.musteriArtikelNo}</span>}
                       </div>
