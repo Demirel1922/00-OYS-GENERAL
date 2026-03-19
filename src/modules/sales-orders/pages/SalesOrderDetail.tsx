@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, CheckCircle, Truck, Ban, FileText, AlertCircle } from 'lucide-react';
 import type { OrderStatus } from '@/modules/sales-orders/domain/types';
-import { STATUS_LABELS, PRICE_UNIT_LABELS, SOCK_TYPE_LABELS, resolveGenderLabel, resolveSockTypeLabel } from '@/modules/sales-orders/domain/types';
+import { STATUS_LABELS, PRICE_UNIT_LABELS, resolveGenderLabel, resolveSockTypeLabel } from '@/modules/sales-orders/domain/types';
 import { useLookupStore } from '@/store/lookupStore';
 import { formatMoney2, formatDate, formatQuantity } from '@/modules/sales-orders/utils/format';
 import { parsePriceString, canTransitionStatus, approveOrder, shipOrder, cancelOrder } from '@/modules/sales-orders/services/orderService';

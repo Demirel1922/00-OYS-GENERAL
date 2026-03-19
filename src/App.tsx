@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import {
   BrowserRouter,
   Routes,
@@ -8,47 +8,61 @@ import {
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
-import { Login } from '@/pages/Login';
-import { Dashboard } from '@/pages/Dashboard';
-import { Admin } from '@/pages/Admin';
-import { ModulePlaceholder } from '@/pages/ModulePlaceholder';
-import { SubModulePlaceholder } from '@/pages/SubModulePlaceholder';
-import { NotAuthorized403 } from '@/pages/NotAuthorized403';
-import { NotFound404 } from '@/pages/NotFound404';
 import { ProtectedRoute, ModuleProtectedRoute } from '@/components/common/ProtectedRoute';
 
-// Modül sayfaları
-import IplikDepo from '@/pages/IplikDepo';
-import AksesuarDepo from '@/pages/AksesuarDepo';
-import HammaddeDepo from '@/pages/HammaddeDepo';
-import SiparisSatisSevkiyat from '@/pages/SiparisSatisSevkiyat';
-import Sertifikalar from '@/pages/Sertifikalar';
-import DIRPage from '@/pages/Sertifikalar/DIR';
+// ── Lazy-loaded sayfa bileşenleri ──────────────────────────────
 
-// Bilgi Girişleri Modülü (Modül 1) sayfaları
-import BilgiGirisleri from '@/pages/BilgiGirisleri';
-import Musteriler from '@/pages/BilgiGirisleri/Musteriler';
-import Tedarikciler from '@/pages/BilgiGirisleri/Tedarikciler';
-import Depolar from '@/pages/BilgiGirisleri/Depolar';
-import GenelCorapBilgileri from '@/pages/BilgiGirisleri/GenelCorapBilgileri';
-import IplikTanimlari from '@/pages/IplikTanimlari';
-import ArtikelTanimlari from '@/pages/BilgiGirisleri/ArtikelTanimlari';
+// Named export → .then(m => ({ default: m.X }))
+const Login = lazy(() => import('@/pages/Login').then(m => ({ default: m.Login })));
+const Dashboard = lazy(() => import('@/pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Admin = lazy(() => import('@/pages/Admin').then(m => ({ default: m.Admin })));
+const ModulePlaceholder = lazy(() => import('@/pages/ModulePlaceholder').then(m => ({ default: m.ModulePlaceholder })));
+const SubModulePlaceholder = lazy(() => import('@/pages/SubModulePlaceholder').then(m => ({ default: m.SubModulePlaceholder })));
+const NotAuthorized403 = lazy(() => import('@/pages/NotAuthorized403').then(m => ({ default: m.NotAuthorized403 })));
+const NotFound404 = lazy(() => import('@/pages/NotFound404').then(m => ({ default: m.NotFound404 })));
 
-// Sipariş Modülü (Modül 4a) sayfaları
-import { SalesOrdersPage } from '@/modules/sales-orders/pages/SalesOrdersPage';
-import { SalesOrderNew } from '@/modules/sales-orders/pages/SalesOrderNew';
-import { SalesOrderDetail } from '@/modules/sales-orders/pages/SalesOrderDetail';
-import { AnalyticsPage } from '@/modules/sales-orders/pages/AnalyticsPage';
+// Default export → lazy(() => import('...'))
+const IplikDepo = lazy(() => import('@/pages/IplikDepo'));
+const AksesuarDepo = lazy(() => import('@/pages/AksesuarDepo'));
+const HammaddeDepo = lazy(() => import('@/pages/HammaddeDepo'));
+const SiparisSatisSevkiyat = lazy(() => import('@/pages/SiparisSatisSevkiyat'));
+const Sertifikalar = lazy(() => import('@/pages/Sertifikalar'));
+const DIRPage = lazy(() => import('@/pages/Sertifikalar/DIR'));
 
-// Numune Modülü (Modül 2) sayfaları
-import { NumuneDashboard } from '@/modules/numune/pages/NumuneDashboard';
-import { NumuneTaleplerPage } from '@/modules/numune/pages/NumuneTaleplerPage';
-import { YeniNumune } from '@/modules/numune/pages/YeniNumune';
-import { MusteriAnalizi } from '@/modules/numune/pages/MusteriAnalizi';
+// Bilgi Girişleri Modülü (Modül 1) sayfaları — default export
+const BilgiGirisleri = lazy(() => import('@/pages/BilgiGirisleri'));
+const Musteriler = lazy(() => import('@/pages/BilgiGirisleri/Musteriler'));
+const Tedarikciler = lazy(() => import('@/pages/BilgiGirisleri/Tedarikciler'));
+const Depolar = lazy(() => import('@/pages/BilgiGirisleri/Depolar'));
+const GenelCorapBilgileri = lazy(() => import('@/pages/BilgiGirisleri/GenelCorapBilgileri'));
+const IplikTanimlari = lazy(() => import('@/pages/IplikTanimlari'));
+const ArtikelTanimlari = lazy(() => import('@/pages/BilgiGirisleri/ArtikelTanimlari'));
 
-// Üretim Hazırlık Modülü (Modül 2b) sayfaları
-import { UretimHazirlikListePage } from '@/modules/uretim-hazirlik/pages/UretimHazirlikListePage';
-import { UretimHazirlikDetayPage } from '@/modules/uretim-hazirlik/pages/UretimHazirlikDetayPage';
+// Sipariş Modülü (Modül 4a) sayfaları — named export
+const SalesOrdersPage = lazy(() => import('@/modules/sales-orders/pages/SalesOrdersPage').then(m => ({ default: m.SalesOrdersPage })));
+const SalesOrderNew = lazy(() => import('@/modules/sales-orders/pages/SalesOrderNew').then(m => ({ default: m.SalesOrderNew })));
+const SalesOrderDetail = lazy(() => import('@/modules/sales-orders/pages/SalesOrderDetail').then(m => ({ default: m.SalesOrderDetail })));
+const AnalyticsPage = lazy(() => import('@/modules/sales-orders/pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+
+// Numune Modülü (Modül 2) sayfaları — named export
+const NumuneDashboard = lazy(() => import('@/modules/numune/pages/NumuneDashboard').then(m => ({ default: m.NumuneDashboard })));
+const NumuneTaleplerPage = lazy(() => import('@/modules/numune/pages/NumuneTaleplerPage').then(m => ({ default: m.NumuneTaleplerPage })));
+const YeniNumune = lazy(() => import('@/modules/numune/pages/YeniNumune').then(m => ({ default: m.YeniNumune })));
+const MusteriAnalizi = lazy(() => import('@/modules/numune/pages/MusteriAnalizi').then(m => ({ default: m.MusteriAnalizi })));
+
+// Üretim Hazırlık Modülü (Modül 2b) sayfaları — named export
+const UretimHazirlikListePage = lazy(() => import('@/modules/uretim-hazirlik/pages/UretimHazirlikListePage').then(m => ({ default: m.UretimHazirlikListePage })));
+const UretimHazirlikDetayPage = lazy(() => import('@/modules/uretim-hazirlik/pages/UretimHazirlikDetayPage').then(m => ({ default: m.UretimHazirlikDetayPage })));
+
+// ── Sayfa yükleme göstergesi ───────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-gray-500">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+      <span className="text-sm font-medium">Yükleniyor...</span>
+    </div>
+  );
+}
 
 // Auth check wrapper
 function AuthWrapper({ children }: { children: React.ReactNode }) {
@@ -75,6 +89,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       {/* Public Routes */}
       <Route
@@ -404,6 +419,7 @@ function AppRoutes() {
       {/* Catch all - 404 */}
       <Route path="*" element={<NotFound404 />} />
     </Routes>
+    </Suspense>
   );
 }
 

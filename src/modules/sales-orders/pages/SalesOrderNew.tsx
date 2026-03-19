@@ -4,34 +4,19 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash2, ArrowLeft, Save, CheckCircle, Check, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { salesOrderSchema, type SalesOrderFormData } from '@/modules/sales-orders/domain/schema';
 import {
-  CURRENCIES,
   type SalesOrder,
   type SalesOrderLine,
-  resolveGenderLabel,
-  resolveSockTypeLabel,
 } from '@/modules/sales-orders/domain/types';
 import {
   normalizePriceInput,
-  formatMoney2,
-  formatQuantity,
 } from '@/modules/sales-orders/utils/format';
 import { useCreateSalesOrder } from '@/modules/sales-orders/hooks/useCreateSalesOrder';
 import { calculateLineTotals, calculateOrderTotals } from '@/modules/sales-orders/services/orderService';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 
 import { Header } from '@/components/common/Header';
 
@@ -40,8 +25,11 @@ import { useMusteriStore } from '@/store/musteriStore';
 import { useRenkStore } from '@/store/renkStore';
 import { useLookupStore } from '@/store/lookupStore';
 import { useArtikelStore } from '@/store/artikelStore';
-import { toTitleCaseTR } from '@/utils/titleCase';
-import { ArtikelCombobox } from '@/modules/sales-orders/components/ArtikelCombobox';
+
+// Sub-components
+import { OrderHeaderForm } from '@/modules/sales-orders/components/OrderHeaderForm';
+import { OrderLineTable } from '@/modules/sales-orders/components/OrderLineTable';
+import { OrderSummary } from '@/modules/sales-orders/components/OrderSummary';
 
 function makeEmptyLine(defaultCurrency: string = 'TRY') {
   return {
@@ -369,415 +357,37 @@ export function SalesOrderNew() {
         <CardContent>
           <Form {...form}>
             <form className="space-y-6">
-              {/* Header */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>Sipariş No</Label>
-                  <Input
-                    placeholder="Kaydedildiğinde otomatik üretilecek"
-                    disabled
-                    className="bg-gray-50"
-                  />
-                  <p className="text-xs text-gray-500">Format: YY + Müşteri No + Sıra (örn: 260390001)</p>
-                </div>
+              <OrderHeaderForm form={form} aktifMusteriler={aktifMusteriler} />
 
-                <FormField control={form.control} name="customer_id" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Müşteri *</FormLabel>
-                    <Select onValueChange={(val) => {
-                      field.onChange(val);
-                      // Müşteri seçilince ödeme koşullarını otomatik doldur
-                      const musteri = aktifMusteriler.find(m => m.id === val);
-                      if (musteri) {
-                        const vadeBirim = musteri.odemeVadesiBirim === 'GUN' ? 'Gün' : 'Ay';
-                        const odemeStr = `${musteri.odemeTipi} - ${musteri.odemeVadesiDeger} ${vadeBirim}`;
-                        form.setValue('payment_terms', odemeStr);
-                      }
-                    }} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Müşteri seçin" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {aktifMusteriler.map((m) => <SelectItem key={m.id} value={m.id}>{m.ormeciMusteriNo}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+              <OrderLineTable
+                form={form}
+                fields={fields}
+                append={append}
+                lines={lines}
+                confirmedLines={confirmedLines}
+                handleConfirmLine={handleConfirmLine}
+                handleConfirmAndAddNew={handleConfirmAndAddNew}
+                handleRemoveLine={handleRemoveLine}
+                handleQuantityChange={handleQuantityChange}
+                handlePriceUnitChange={handlePriceUnitChange}
+                handleLinePriceChange={handleLinePriceChange}
+                handleLineCurrencyChange={handleLineCurrencyChange}
+                aktifRenkler={aktifRenkler}
+                bedenler={bedenler}
+                cinsiyetler={cinsiyetler}
+                corapTipleri={corapTipleri}
+                getBirimAdi={getBirimAdi}
+                makeEmptyLine={makeEmptyLine}
+                artikeller={artikeller}
+                getSortedItemsByType={getSortedItemsByType}
+              />
 
-                <FormField control={form.control} name="customer_po_no" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Müşteri PO No</FormLabel>
-                    <FormControl><Input {...field} placeholder="Müşteri sipariş numarası" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <FormField control={form.control} name="order_date" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sipariş Tarihi *</FormLabel>
-                    <FormControl><Input type="date" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <FormField control={form.control} name="requested_termin" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Talep Edilen Termin *</FormLabel>
-                    <FormControl><Input type="date" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <FormField control={form.control} name="confirmed_termin" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Onaylı Termin *</FormLabel>
-                    <FormControl><Input type="date" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <FormField control={form.control} name="payment_terms" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ödeme Koşulları *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Müşteri seçilince otomatik dolar" />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">Müşteri seçilince otomatik dolar, gerekirse düzenleyebilirsiniz</p>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <FormField control={form.control} name="incoterm" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teslim Şekli (Incoterm)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="EXW">EXW</SelectItem>
-                        <SelectItem value="FOB">FOB</SelectItem>
-                        <SelectItem value="CIF">CIF</SelectItem>
-                        <SelectItem value="DDP">DDP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
-
-              {/* Siparis Kalemleri */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Sipariş Kalemleri</h3>
-
-                {fields.map((field, index) => {
-                  const watchedLine = lines[index];
-                  const isConfirmed = confirmedLines.has(index);
-                  const lineCurrency = watchedLine?.currency || 'TRY';
-                  const isFirstLine = index === 0;
-                  const canDelete = !isFirstLine || fields.length > 1;
-
-                  return (
-                    <Card key={field.id} className={`p-4 ${isConfirmed ? 'border-green-300 bg-green-50/30' : ''}`}>
-                      {isConfirmed ? (
-                        /* Eklenen kalem — kompakt özet satırı */
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-1 text-green-700 text-xs font-medium shrink-0">
-                            <Check className="w-3 h-3" /> Eklendi
-                          </div>
-                          <div className="flex-1 grid grid-cols-2 md:grid-cols-11 gap-2 text-sm">
-                            <div><span className="text-gray-500 text-xs block">Artikel No</span><span className="font-medium font-mono">{watchedLine?.artikel_no || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Ürün Tanımı</span><span className="font-medium">{watchedLine?.product_name || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Çorap Grubu</span><span>{resolveGenderLabel(watchedLine?.gender)}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Çorap Tipi</span><span>{resolveSockTypeLabel(watchedLine?.sock_type)}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Renk</span><span>{watchedLine?.color || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Beden</span><span>{watchedLine?.size || '-'}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Miktar</span><span className="font-medium">{formatQuantity(watchedLine?.quantity ?? 0)}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Birim</span><span>{getBirimAdi(watchedLine?.price_unit)}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Toplam Çift</span><span className="font-medium">{formatQuantity(watchedLine?.line_total_pairs ?? 0)}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Birim Fiyat</span><span>{watchedLine?.unit_price || '0'} {lineCurrency}</span></div>
-                            <div><span className="text-gray-500 text-xs block">Tutar</span><span className="font-bold">{formatMoney2(watchedLine?.line_amount, lineCurrency)}</span></div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => handleRemoveLine(index)}
-                            title="Kalemi Sil"
-                            className="h-8 w-8 shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        /* Onaylanmamış kalem — düzenleme formu */
-                        <>
-                      <div className="space-y-3">
-                        {/* Satır 0: Örmeci Artikel No seçimi */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <FormField control={form.control} name={`lines.${index}.artikel_no`} render={({ field: artikelField }) => (
-                            <FormItem>
-                              <FormLabel>Örmeci Artikel No</FormLabel>
-                              <FormControl>
-                                <ArtikelCombobox
-                                  artikeller={artikeller}
-                                  value={artikelField.value || ''}
-                                  disabled={isConfirmed}
-                                  onSelect={(artikel) => {
-                                    if (artikel) {
-                                      form.setValue(`lines.${index}.artikel_no`, artikel.ormeciArtikelNo || '', { shouldValidate: true });
-                                      form.setValue(`lines.${index}.product_name`, artikel.urunTanimi || '', { shouldValidate: true });
-                                      form.setValue(`lines.${index}.gender`, artikel.corapGrubu || '', { shouldValidate: true });
-                                      form.setValue(`lines.${index}.sock_type`, artikel.corapTipi || '', { shouldValidate: true });
-                                    } else {
-                                      form.setValue(`lines.${index}.artikel_no`, '', { shouldValidate: true });
-                                      form.setValue(`lines.${index}.product_name`, '', { shouldValidate: true });
-                                      form.setValue(`lines.${index}.gender`, '', { shouldValidate: true });
-                                      form.setValue(`lines.${index}.sock_type`, '', { shouldValidate: true });
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                        </div>
-
-                        {/* Satır 1: Ürün Tanımı, Çorap Grubu, Çorap Tipi, Renk, Beden */}
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        {/* Ürün Tanımı — artikel seçiliyken readonly */}
-                        <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ürün Tanımı</FormLabel>
-                            <FormControl><Input {...field} placeholder="Artikel seçin" disabled={isConfirmed || !!watchedLine?.artikel_no} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Çorap Grubu — artikel seçiliyken readonly */}
-                        <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Çorap Grubu</FormLabel>
-                            {watchedLine?.artikel_no ? (
-                              <FormControl><Input value={resolveGenderLabel(field.value)} disabled className="h-9 text-sm" /></FormControl>
-                            ) : (
-                              <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                  {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Çorap Tipi — artikel seçiliyken readonly */}
-                        <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Çorap Tipi</FormLabel>
-                            {watchedLine?.artikel_no ? (
-                              <FormControl><Input value={resolveSockTypeLabel(field.value)} disabled className="h-9 text-sm" /></FormControl>
-                            ) : (
-                              <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                  {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Renk */}
-                        <FormField control={form.control} name={`lines.${index}.color`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Renk</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue placeholder="Renk seçin" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {aktifRenkler.map((r) => <SelectItem key={r.id} value={r.renkAdi}>{r.renkAdi}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Beden */}
-                        <FormField control={form.control} name={`lines.${index}.size`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Beden</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {bedenler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        </div>
-
-                        {/* Satır 2: Miktar, Birim, Para Birimi, Birim Fiyat, Butonlar */}
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-
-                        {/* Madde 4: Miktar - focus olunca seçilsin */}
-                        <FormField control={form.control} name={`lines.${index}.quantity`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Miktar</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="text"
-                                inputMode="numeric"
-                                value={field.value === 0 ? '' : formatQuantity(field.value)}
-                                onChange={(e) => handleQuantityChange(index, e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                placeholder="0"
-                                disabled={isConfirmed}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Birim */}
-                        <FormField control={form.control} name={`lines.${index}.price_unit`} render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Birim</FormLabel>
-                            <Select onValueChange={(val) => handlePriceUnitChange(index, val)} value={field.value} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {getSortedItemsByType('BIRIM').map((b) => <SelectItem key={b.kod} value={b.kod}>{b.ad}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Para Birimi (kalem bazli) */}
-                        <FormField control={form.control} name={`lines.${index}.currency`} render={({ field: lineField }) => (
-                          <FormItem>
-                            <FormLabel>Para Birimi</FormLabel>
-                            <Select onValueChange={(val) => handleLineCurrencyChange(index, val)} value={lineField.value || 'TRY'} disabled={isConfirmed}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {CURRENCIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.value}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Birim Fiyat */}
-                        <FormField control={form.control} name={`lines.${index}.unit_price`} render={({ field: lineField }) => (
-                          <FormItem>
-                            <FormLabel>Birim Fiyat</FormLabel>
-                            <FormControl>
-                              <Input
-                                value={lineField.value || ''}
-                                placeholder="0,00"
-                                onChange={(e) => handleLinePriceChange(index, e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                disabled={isConfirmed}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-
-                        {/* Butonlar */}
-                        <div className="flex items-end gap-1">
-                              <Button
-                                type="button"
-                                variant="default"
-                                size="icon"
-                                onClick={() => handleConfirmLine(index)}
-                                title="Ekle"
-                                className="bg-green-600 hover:bg-green-700 h-9 w-9"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="default"
-                                size="icon"
-                                onClick={() => handleConfirmAndAddNew(index)}
-                                title="Ekle ve Yeni Satır"
-                                className="bg-blue-600 hover:bg-blue-700 h-9 w-9"
-                              >
-                                <PlusCircle className="w-4 h-4" />
-                              </Button>
-                              {canDelete && (
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="icon"
-                                  onClick={() => handleRemoveLine(index)}
-                                  className="h-9 w-9"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              )}
-                        </div>
-                      </div>
-                      </div>
-
-                      <div className="mt-2 text-sm text-gray-600 flex gap-4">
-                        <span>Toplam Çift: {formatQuantity(watchedLine?.line_total_pairs ?? 0)}</span>
-                        <span>Tutar: {formatMoney2(watchedLine?.line_amount, lineCurrency)}</span>
-                      </div>
-                      </>
-                      )}
-                    </Card>
-                  );
-                })}
-
-                {form.formState.errors.lines && (
-                  <p className="text-sm text-red-500">{form.formState.errors.lines.message}</p>
-                )}
-
-                {/* Yeni Kalem Ekle butonu - her zaman görünür */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => append(makeEmptyLine(lines?.[0]?.currency || 'TRY'))}
-                  className="w-full border-dashed border-2 py-6 text-gray-500 hover:text-gray-700 hover:border-gray-400"
-                >
-                  <PlusCircle className="w-5 h-5 mr-2" />
-                  Yeni Kalem Ekle
-                </Button>
-              </div>
-
-              {/* Notlar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField control={form.control} name="notes" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notlar</FormLabel>
-                    <FormControl><Textarea {...field} placeholder="Müşteri notları..." rows={3} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="internal_notes" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dahili Notlar</FormLabel>
-                    <FormControl><Textarea {...field} placeholder="Dahili notlar..." rows={3} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
-
-              {/* Toplam */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">Toplam ({confirmedLines.size} kalem):</span>
-                  <div className="text-right">
-                    <div className="text-lg font-bold">{formatQuantity(totals.total_pairs)} çift</div>
-                    <div className="text-xl font-bold text-primary">
-                      {formatMoney2(totals.total_amount, lines?.[0]?.currency || 'TRY')}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <OrderSummary
+                form={form}
+                confirmedLines={confirmedLines}
+                totals={totals}
+                lines={lines}
+              />
             </form>
           </Form>
         </CardContent>

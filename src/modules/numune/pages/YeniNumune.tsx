@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save, CheckCircle, Plus, Trash2, Loader2, X, Check, Edit3 } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle, Loader2, X, Check, Edit3 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,9 +11,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  IGNE_SAYILARI, CAP_DEGERLERI,
-} from '../../uretim-hazirlik/constants/lookups';
+import { NumuneGeneralInfoForm } from '../components/NumuneGeneralInfoForm';
+import { NumuneOlcuForm } from '../components/NumuneOlcuForm';
+import { NumuneIplikForm } from '../components/NumuneIplikForm';
 import { useRenkStore } from '@/store/renkStore';
 import { useIplikDetayStore } from '@/store/iplikDetayStore';
 import { useKalinlikStore } from '@/store/kalinlikStore';
@@ -62,58 +62,6 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
-const CINSIYET_OPTIONS = [
-  { value: '1', label: 'Erkek' },
-  { value: '2', label: 'Kadın' },
-  { value: '3', label: 'Çocuk' },
-  { value: '4', label: 'Bebek' },
-  { value: '5', label: 'Unisex' },
-  { value: '6', label: 'Külotlu' },
-  { value: '7', label: 'Erkek 2' },
-  { value: '8', label: 'Kadın 2' },
-  { value: '9', label: 'Bebek-Çocuk 2' },
-  { value: '0', label: 'Unisex 2' },
-];
-
-const NUMUNE_TIPI_OPTIONS = [
-  { value: '', label: 'Seçiniz' },
-  { value: 'ILK_GELISTIRME', label: 'İlk Geliştirme Numunesi' },
-  { value: 'BOY_SETI', label: 'Boy Seti' },
-  { value: 'RENK_SETI', label: 'Renk Seti' },
-  { value: 'KALITE_NUMUNESI', label: 'Kalite Numunesi' },
-  { value: 'PREPRODUCTION', label: 'Preproduction Sample' },
-  { value: 'PRODUCTION', label: 'Production Sample' },
-  { value: 'SALESMAN', label: 'Salesman Sample' },
-  { value: 'FUAR_NUMUNESI', label: 'Fuar Numunesi' },
-  { value: 'REVIZE_NUMUNE', label: 'Revize Numune' },
-  { value: 'REFERANS_NUMUNE', label: 'Referans Numune' },
-  { value: 'TEST_NUMUNESI', label: 'Test Numunesi' }
-];
-
-const SEBEP_OPTIONS = [
-  { value: '', label: 'Seçiniz' },
-  { value: 'MUSTERI_TALEBI', label: 'Müşteri Talebi' },
-  { value: 'SATIS_EKIBI_TALEBI', label: 'Satış Ekibi Talebi' },
-  { value: 'FUAR_SONRASI', label: 'Fuar Sonrası Talep' },
-  { value: 'YENI_KOLEKSIYON', label: 'Yeni Koleksiyon Geliştirme' },
-  { value: 'MEVCUT_REVIZE', label: 'Mevcut Ürünün Revizesi' },
-  { value: 'KALITE_PROBLEMI', label: 'Kalite Problemi Sonrası Yeniden Numune' }
-];
-
-const CORAP_TIPI_OPTIONS = [
-  { value: '', label: 'Seçiniz' },
-  { value: 'PATIK', label: 'Patik' },
-  { value: 'KISA_KONC', label: 'Kısa Konç' },
-  { value: 'NORMAL_KONC', label: 'Normal Konç' },
-  { value: 'CETIK', label: 'Çetik' },
-  { value: 'DIZALTI', label: 'Dizaltı' },
-  { value: 'DIZUSTU', label: 'Dizüstü' },
-  { value: 'KULOTLU', label: 'Külotlu Çorap' }
-];
-
-
-const YIKAMA_OPTIONS = ['Var', 'Yok', 'Hafif', 'Sert'];
-const BIRIM_OPTIONS = ['Çift', 'Düzine', 'Adet'];
 
 const getFixedYarnRows = (): YarnRow[] => [
   { id: 1, kullanimYeri: 'LASTİK', detay: 'Lastik Elastiği', denye: '', cins: '', renkKodu: '', renk: '', tedarikci: '', not: '', isFixed: true },
@@ -640,280 +588,37 @@ export function YeniNumune() {
         </div>
 
         {activeTab === 'general' && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Numune No</label>
-                <input type="text" disabled value={formData.generalInfo.numuneNo} placeholder="Çorap Grubu seçince otomatik oluşur" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-100 text-gray-600 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Grubu *</label>
-                <select value={formData.generalInfo.cinsiyet} onChange={(e) => handleGeneralChange('cinsiyet', e.target.value)} disabled={isEditMode} className={`w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}>
-                  <option value="">Seçiniz</option>
-                  {CINSIYET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Numune Tipi *</label>
-                <select value={formData.generalInfo.numuneTipi} onChange={(e) => handleGeneralChange('numuneTipi', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  {NUMUNE_TIPI_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Numunenin Sebebi *</label>
-                <select value={formData.generalInfo.sebep} onChange={(e) => handleGeneralChange('sebep', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  {SEBEP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Müşteri Kodu *</label>
-                <select value={formData.generalInfo.musteriKodu} onChange={(e) => handleGeneralChange('musteriKodu', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  <option value="">Seçiniz</option>
-                  {aktifMusteriler.map(m => <option key={m.id} value={m.ormeciMusteriNo}>{m.ormeciMusteriNo}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Müşteri Artikel Kodu</label>
-                <input type="text" value={formData.generalInfo.musteriArtikelKodu} onChange={(e) => handleGeneralChange('musteriArtikelKodu', e.target.value)} placeholder="Artikel no" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Müşteri Markası</label>
-                <input type="text" value={formData.generalInfo.musteriMarkasi} onChange={(e) => handleGeneralChange('musteriMarkasi', e.target.value)} placeholder="Marka adı" className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Tipi</label>
-                <select value={formData.generalInfo.corapTipi} onChange={(e) => handleGeneralChange('corapTipi', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  {CORAP_TIPI_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Çorap Dokusu</label>
-                <select value={formData.generalInfo.corapDokusu} onChange={(e) => handleGeneralChange('corapDokusu', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  <option value="">Seçiniz</option>
-                  {dokuListesi.map(d => <option key={d.id} value={d.ad}>{d.ad}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">İğne Sayısı</label>
-                <select value={formData.generalInfo.igneSayisi} onChange={(e) => handleGeneralChange('igneSayisi', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  <option value="">Seçiniz</option>
-                  {IGNE_SAYILARI.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kovan Çapı</label>
-                <select value={formData.generalInfo.kovanCapi} onChange={(e) => handleGeneralChange('kovanCapi', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  <option value="">Seçiniz</option>
-                  {CAP_DEGERLERI.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Forma Bilgisi</label>
-                <input type="text" value={formData.generalInfo.formaBilgisi} onChange={(e) => handleGeneralChange('formaBilgisi', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Forma Şekli</label>
-                <input type="text" value={formData.generalInfo.formaSekli} onChange={(e) => handleGeneralChange('formaSekli', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Yıkama</label>
-                <select value={formData.generalInfo.yikama} onChange={(e) => handleGeneralChange('yikama', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm">
-                  <option value="">Seçiniz</option>
-                  {YIKAMA_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ölçü Şekli</label>
-                <input type="text" value={formData.generalInfo.olcuSekli} onChange={(e) => handleGeneralChange('olcuSekli', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Tanımı</label>
-              <textarea value={formData.generalInfo.corapTanimi} onChange={(e) => handleGeneralChange('corapTanimi', e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Desene Veriliş Tarihi</label>
-                <input type="date" value={formData.generalInfo.deseneVerilisTarihi} onChange={(e) => handleGeneralChange('deseneVerilisTarihi', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hedef Tarih *</label>
-                <input type="date" value={formData.generalInfo.hedefTarih} onChange={(e) => handleGeneralChange('hedefTarih', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm" />
-              </div>
-            </div>
-          </div>
+          <NumuneGeneralInfoForm
+            formData={formData}
+            handleGeneralChange={handleGeneralChange}
+            isEditMode={isEditMode}
+            aktifMusteriler={aktifMusteriler}
+            dokuListesi={dokuListesi}
+          />
         )}
 
         {activeTab === 'measurements' && (
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-base font-semibold">Ölçü Tablosu</h3>
-              <button onClick={addMeasurementRow} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                <Plus size={14} /> Yeni Boy Ekle
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border border-gray-200">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-10"></th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-24">Boy *</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Renk *</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Lst.Eni</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Lst.Yük.</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Kç.Eni</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Ay.Eni</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Kç.Boy</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Tb.Boy</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Lst.Str.</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Kç/Ay.Str.</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Tp.Str.</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-12">Bord</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Miktar *</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Birim</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.measurements.map((row, idx) => (
-                    <tr key={row.id} className="border-b border-gray-100">
-                      <td className="px-1 py-0.5">
-                        <button onClick={() => removeMeasurementRow(idx)} className="text-red-500 hover:text-red-700 p-0.5">
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.bedenler} onChange={(e) => handleMeasurementChange(idx, 'bedenler', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          <option value="">Seçiniz</option>
-                          {row.bedenler && !boyListesi.some(b => b.ad === row.bedenler) && (
-                            <option value={row.bedenler}>{row.bedenler}</option>
-                          )}
-                          {boyListesi.map(b => <option key={b.id} value={b.ad}>{b.ad}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.renk} onChange={(e) => handleMeasurementChange(idx, 'renk', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          <option value="">Seçiniz</option>
-                          {aktifRenkler.map(r => <option key={r.id} value={r.renkAdi}>{r.renkAdi}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.lastikEni} onChange={(e) => handleMeasurementChange(idx, 'lastikEni', e.target.value)} placeholder="cm" className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.lastikYuksekligi} onChange={(e) => handleMeasurementChange(idx, 'lastikYuksekligi', e.target.value)} placeholder="cm" className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.koncEni} onChange={(e) => handleMeasurementChange(idx, 'koncEni', e.target.value)} placeholder="cm" className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.ayakEni} onChange={(e) => handleMeasurementChange(idx, 'ayakEni', e.target.value)} placeholder="cm" className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.koncBoyu} onChange={(e) => handleMeasurementChange(idx, 'koncBoyu', e.target.value)} placeholder="cm" className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.tabanBoyu} onChange={(e) => handleMeasurementChange(idx, 'tabanBoyu', e.target.value)} placeholder="cm" className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.lastikStreci} onChange={(e) => handleMeasurementChange(idx, 'lastikStreci', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.koncStreciAyakStreci} onChange={(e) => handleMeasurementChange(idx, 'koncStreciAyakStreci', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.topukStreci} onChange={(e) => handleMeasurementChange(idx, 'topukStreci', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.bord} onChange={(e) => handleMeasurementChange(idx, 'bord', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5"><input type="text" inputMode="numeric" pattern="[0-9]*" value={row.miktar} onChange={(e) => handleMeasurementChange(idx, 'miktar', parseInt(e.target.value) || 1)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.birim} onChange={(e) => handleMeasurementChange(idx, 'birim', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          {BIRIM_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <NumuneOlcuForm
+            formData={formData}
+            handleMeasurementChange={handleMeasurementChange}
+            addMeasurementRow={addMeasurementRow}
+            removeMeasurementRow={removeMeasurementRow}
+            boyListesi={boyListesi}
+            aktifRenkler={aktifRenkler}
+          />
         )}
 
         {activeTab === 'yarn' && (
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-base font-semibold">İplik Bilgileri</h3>
-              <button
-                onClick={addDesenRow}
-                disabled={formData.desenCount >= 10}
-                title={formData.desenCount >= 10 ? 'Maksimum 10 desen eklenebilir' : ''}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus size={14} /> Desen Ekle ({formData.desenCount}/10)
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border border-gray-200">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-28">Kullanım Yeri</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-28">Detay</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-14">Denye</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Cins</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Renk Kodu</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-16">Renk</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-20">Tedarikçi</th>
-                    <th className="px-1.5 py-1.5 text-left font-medium text-gray-700 w-24">Not</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.yarnInfo.map((row, idx) => (
-                    <tr key={row.id} className="border-b border-gray-100">
-                      <td className="px-1 py-0.5 text-gray-600 font-medium text-xs">{row.kullanimYeri}</td>
-                      <td className="px-1 py-0.5 text-gray-600 text-xs">{row.detay}</td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.denye} onChange={(e) => handleYarnChange(idx, 'denye', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          <option value="">Seçiniz</option>
-                          {aktifKalinliklar.map(k => <option key={k.id} value={k.gosterim}>{k.gosterim}</option>)}
-                          {row.denye && !aktifKalinliklar.some(k => k.gosterim === row.denye) && <option value={row.denye}>{row.denye}</option>}
-                        </select>
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.cins} onChange={(e) => handleYarnChange(idx, 'cins', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          <option value="">Seçiniz</option>
-                          {aktifIplikDetaylar.map(d => <option key={d.id} value={d.detayAdi}>{d.detayAdi}</option>)}
-                          {row.cins && !aktifIplikDetaylar.some(d => d.detayAdi === row.cins) && <option value={row.cins}>{row.cins}</option>}
-                        </select>
-                      </td>
-                      <td className="px-1 py-0.5"><input type="text" value={row.renkKodu} onChange={(e) => handleYarnChange(idx, 'renkKodu', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs" /></td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.renk} onChange={(e) => handleYarnChange(idx, 'renk', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          <option value="">Seçiniz</option>
-                          {aktifRenkler.map(r => <option key={r.id} value={r.renkAdi}>{r.renkAdi}</option>)}
-                          {row.renk && !aktifRenkler.some(r => r.renkAdi === row.renk) && <option value={row.renk}>{row.renk}</option>}
-                        </select>
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <select value={row.tedarikci} onChange={(e) => handleYarnChange(idx, 'tedarikci', e.target.value)} className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs">
-                          <option value="">Seçiniz</option>
-                          {iplikTedarikcileri.map(t => <option key={t.id} value={t.tedarikciAdi}>{t.tedarikciKodu} - {t.tedarikciAdi}</option>)}
-                          {row.tedarikci && !iplikTedarikcileri.some(t => t.tedarikciAdi === row.tedarikci) && <option value={row.tedarikci}>{row.tedarikci}</option>}
-                        </select>
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <div className="flex items-center gap-1">
-                          <input type="text" value={row.not} onChange={(e) => handleYarnChange(idx, 'not', e.target.value)} className="flex-1 border border-gray-300 rounded px-1.5 py-0.5 text-xs" />
-                          {!row.isFixed && (
-                            <button onClick={() => removeDesenRow(idx)} className="text-red-500 hover:text-red-700 p-0.5 flex-shrink-0" title="Deseni Sil">
-                              <Trash2 size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <NumuneIplikForm
+            formData={formData}
+            handleYarnChange={handleYarnChange}
+            addDesenRow={addDesenRow}
+            removeDesenRow={removeDesenRow}
+            aktifKalinliklar={aktifKalinliklar}
+            aktifIplikDetaylar={aktifIplikDetaylar}
+            aktifRenkler={aktifRenkler}
+            iplikTedarikcileri={iplikTedarikcileri}
+          />
         )}
       </div>
     </div>
