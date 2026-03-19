@@ -62,6 +62,14 @@ const defaultItems: LookupItem[] = [
   { id: 'c9', lookupType: 'CINSIYET', kod: 'CINSIYET_BEBEK_COCUK2', ad: 'Bebek-Çocuk 2', sira: 9, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
   { id: 'c10', lookupType: 'CINSIYET', kod: 'CINSIYET_UNISEX2', ad: 'Unisex 2', sira: 10, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
 
+  // --- DOKULAR ---
+  { id: 'dk1', lookupType: 'DOKU', kod: 'DOKU_DUZ', ad: 'Düz', sira: 1, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'dk2', lookupType: 'DOKU', kod: 'DOKU_HAVLU', ad: 'Havlu', sira: 2, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'dk3', lookupType: 'DOKU', kod: 'DOKU_YARIM_HAVLU', ad: 'Yarım Havlu', sira: 3, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'dk4', lookupType: 'DOKU', kod: 'DOKU_TEKNIK_HAVLU', ad: 'Teknik Havlu', sira: 4, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'dk5', lookupType: 'DOKU', kod: 'DOKU_SECMELI_HAVLU', ad: 'Seçmeli Havlu', sira: 5, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'dk6', lookupType: 'DOKU', kod: 'DOKU_DERBILI', ad: 'Derbili', sira: 6, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+
   // --- BİRİMLER ---
   { id: 'br1', lookupType: 'BIRIM', kod: 'BIRIM_CIFT', ad: 'Çift', sira: 1, carpan: 1, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
   { id: 'br2', lookupType: 'BIRIM', kod: 'BIRIM_DUZINE', ad: 'Düzine', sira: 2, carpan: 12, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },

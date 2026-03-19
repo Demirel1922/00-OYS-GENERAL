@@ -37,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Edit, Trash2, Search, Footprints, ArrowLeft, Ruler, Users, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Footprints, ArrowLeft, Ruler, Users, Package, Layers } from 'lucide-react';
 import { useLookupStore } from '@/store/lookupStore';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -48,6 +48,7 @@ const LOOKUP_TYPES: { id: LookupType; label: string; labelTekil: string; icon: R
   { id: 'BEDEN', label: 'Beden', labelTekil: 'Beden', icon: Ruler, description: 'Çorap beden ölçüleri (35-38, 39-42 vb.)' },
   { id: 'TIP', label: 'Tip', labelTekil: 'Tip', icon: Footprints, description: 'Çorap tipleri (Patik, Kısa, Diz Altı vb.)' },
   { id: 'CINSIYET', label: 'Çorap Grubu', labelTekil: 'Çorap Grubu', icon: Users, description: 'Çorap grubu kategorileri (Erkek, Kadın, Unisex vb.)' },
+  { id: 'DOKU', label: 'Doku', labelTekil: 'Doku', icon: Layers, description: 'Çorap dokusu türleri (Düz, Havlu, Yarım Havlu vb.)' },
   { id: 'BIRIM', label: 'Birim', labelTekil: 'Birim', icon: Package, description: 'Sipariş birimleri (Çift, Düzine, Paket vb.)' },
 ];
 

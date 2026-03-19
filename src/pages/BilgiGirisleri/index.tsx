@@ -97,6 +97,7 @@ export default function BilgiGirisleri() {
   const bedenCount = items.filter(i => i.lookupType === 'BEDEN').length;
   const tipCount = items.filter(i => i.lookupType === 'TIP').length;
   const cinsiyetCount = items.filter(i => i.lookupType === 'CINSIYET').length;
+  const dokuCount = items.filter(i => i.lookupType === 'DOKU').length;
 
   // Numune sıra sayacını kaydet — boş veya [A-Z][0-9] formatında doğrulama
   const saveNumuneSira = () => {
@@ -144,11 +145,11 @@ export default function BilgiGirisleri() {
     {
       id: 'genel-corap-bilgileri',
       title: 'Genel Çorap Bilgileri',
-      description: 'Bedenler, Tipler ve Çorap Gruplarını yönetin. Sipariş ve üretimde kullanılır.',
+      description: 'Bedenler, Tipler, Çorap Grupları ve Doku türlerini yönetin. Sipariş ve üretimde kullanılır.',
       icon: Footprints,
       route: '/module/1/genel-corap-bilgileri',
       color: 'bg-teal-500',
-      count: bedenCount + tipCount + cinsiyetCount,
+      count: bedenCount + tipCount + cinsiyetCount + dokuCount,
     },
     {
       id: 'iplik-tanimlari',
