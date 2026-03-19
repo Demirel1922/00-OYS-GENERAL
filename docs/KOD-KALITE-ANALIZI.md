@@ -10,7 +10,7 @@
 
 ### Mevcut Durum
 
-`src/App.tsx` dosyasında **26 sayfa/modül bileşeni** eagerly import edilmektedir (satır 1-52). Hiçbirinde `React.lazy()` kullanılmamış ve dosyada `Suspense` fallback bileşeni **bulunmamaktadır**.
+`src/App.tsx` dosyasında **30 sayfa/modül bileşeni** eagerly import edilmektedir (satır 1-52). Hiçbirinde `React.lazy()` kullanılmamış ve dosyada `Suspense` fallback bileşeni **bulunmamaktadır**.
 
 ### Eagerly Import Edilen Sayfa Bileşenleri
 
