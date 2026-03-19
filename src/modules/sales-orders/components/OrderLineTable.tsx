@@ -150,47 +150,39 @@ export function OrderLineTable({
 
               {/* Satır 1: Ürün Tanımı, Çorap Grubu, Çorap Tipi, Renk, Beden */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {/* Ürün Tanımı — artikel seçiliyken readonly */}
+              {/* Ürün Tanımı */}
               <FormField control={form.control} name={`lines.${index}.product_name`} render={({ field }) => (
                 <FormItem>
                   <FormLabel>Ürün Tanımı</FormLabel>
-                  <FormControl><Input {...field} placeholder="Artikel seçin" disabled={isConfirmed || !!watchedLine?.artikel_no} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
+                  <FormControl><Input {...field} placeholder="Artikel seçin" disabled={isConfirmed} onBlur={() => { field.onBlur(); if (field.value) form.setValue(field.name, toTitleCaseTR(field.value)); }} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
 
-              {/* Çorap Grubu — artikel seçiliyken readonly */}
+              {/* Çorap Grubu */}
               <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
                 <FormItem>
                   <FormLabel>Çorap Grubu</FormLabel>
-                  {watchedLine?.artikel_no ? (
-                    <FormControl><Input value={resolveGenderLabel(field.value)} disabled className="h-9 text-sm" /></FormControl>
-                  ) : (
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
+                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />
 
-              {/* Çorap Tipi — artikel seçiliyken readonly */}
+              {/* Çorap Tipi */}
               <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
                 <FormItem>
                   <FormLabel>Çorap Tipi</FormLabel>
-                  {watchedLine?.artikel_no ? (
-                    <FormControl><Input value={resolveSockTypeLabel(field.value)} disabled className="h-9 text-sm" /></FormControl>
-                  ) : (
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
-                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
+                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />

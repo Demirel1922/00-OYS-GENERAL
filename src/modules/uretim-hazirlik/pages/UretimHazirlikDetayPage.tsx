@@ -22,6 +22,9 @@ import { OnayTab } from '../components/OnayTab';
 
 type TabKey = 'urun' | 'gramaj' | 'yikama' | 'forma' | 'makina' | 'onay';
 
+// Ürün tanımı alanları kilitli durumda bile düzenlenebilir
+const URUN_TANIMI_FIELDS = ['urunTanimi', 'musteriKodu', 'ormeciArtikelKodu', 'musteriArtikelKodu'];
+
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'urun', label: 'Ürün Hazırlık Kartı' },
   { key: 'gramaj', label: 'Gramaj' },
@@ -60,7 +63,8 @@ export function UretimHazirlikDetayPage() {
   }, []);
 
   const updateUrunKarti = useCallback((field: string, value: any) => {
-    if (!kayit || isLocked) return;
+    if (!kayit) return;
+    if (isLocked && !URUN_TANIMI_FIELDS.includes(field)) return;
     setKayit(prev => prev ? { ...prev, urunKarti: { ...prev.urunKarti, [field]: value } } : prev);
   }, [kayit, isLocked]);
 

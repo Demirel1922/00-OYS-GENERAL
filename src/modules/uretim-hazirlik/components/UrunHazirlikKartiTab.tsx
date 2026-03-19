@@ -101,16 +101,16 @@ export function UrunHazirlikKartiTab({ kayit, locked, updateField, updateIplik, 
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <FormField label="Ürün Tanımı" required>
-          <FieldInput value={k.urunTanimi} onChange={v => updateField('urunTanimi', v)} disabled={locked} />
+          <FieldInput value={k.urunTanimi} onChange={v => updateField('urunTanimi', v)} />
         </FormField>
         <FormField label="Müşteri Kodu" required>
-          <LookupSelect value={k.musteriKodu} onChange={v => updateField('musteriKodu', v)} options={musteriOptions} disabled={locked} />
+          <LookupSelect value={k.musteriKodu} onChange={v => updateField('musteriKodu', v)} options={musteriOptions} />
         </FormField>
         <FormField label="Örmeci Artikel Kodu" required>
-          <FieldInput value={k.ormeciArtikelKodu} onChange={v => updateField('ormeciArtikelKodu', v)} disabled={locked} />
+          <FieldInput value={k.ormeciArtikelKodu} onChange={v => updateField('ormeciArtikelKodu', v)} />
         </FormField>
         <FormField label="Müşteri Artikel Kodu">
-          <FieldInput value={k.musteriArtikelKodu} onChange={v => updateField('musteriArtikelKodu', v)} disabled={locked} />
+          <FieldInput value={k.musteriArtikelKodu} onChange={v => updateField('musteriArtikelKodu', v)} />
         </FormField>
         <FormField label="Hazırlayan">
           <LookupSelect value={k.hazirlayan} onChange={v => updateField('hazirlayan', v)} options={HAZIRLAYANLAR} disabled={locked} />
