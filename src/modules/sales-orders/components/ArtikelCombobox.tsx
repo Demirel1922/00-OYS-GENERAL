@@ -51,7 +51,7 @@ export function ArtikelCombobox({ artikeller, value, onSelect, disabled }: Artik
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command
             filter={(value, search) => {
               const artikel = aktifArtikeller.find(a => a.id === value);

@@ -555,12 +555,16 @@ export function SalesOrderNew() {
                         <FormField control={form.control} name={`lines.${index}.gender`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Çorap Grubu</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed || !!watchedLine?.artikel_no}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            {watchedLine?.artikel_no ? (
+                              <FormControl><Input value={field.value || ''} disabled className="h-9 text-sm" /></FormControl>
+                            ) : (
+                              <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
+                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  {cinsiyetler.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -569,12 +573,16 @@ export function SalesOrderNew() {
                         <FormField control={form.control} name={`lines.${index}.sock_type`} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Çorap Tipi</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed || !!watchedLine?.artikel_no}>
-                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            {watchedLine?.artikel_no ? (
+                              <FormControl><Input value={field.value || ''} disabled className="h-9 text-sm" /></FormControl>
+                            ) : (
+                              <Select onValueChange={field.onChange} value={field.value} disabled={isConfirmed}>
+                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  {corapTipleri.map((o) => <SelectItem key={o.id} value={o.ad}>{o.ad}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )} />
