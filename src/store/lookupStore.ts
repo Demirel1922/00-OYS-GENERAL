@@ -1,7 +1,7 @@
 // ============================================
 // LOOKUP STORE - Zustand
 // ============================================
-// Bedenler, Tipler, Çorap Grupları için ortak store
+// Bedenler, Tipler, Çorap Grupları, Dokular için ortak store
 // ============================================
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -61,6 +61,14 @@ const defaultItems: LookupItem[] = [
   { id: 'c8', lookupType: 'CINSIYET', kod: 'CINSIYET_KADIN2', ad: 'Kadın 2', sira: 8, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
   { id: 'c9', lookupType: 'CINSIYET', kod: 'CINSIYET_BEBEK_COCUK2', ad: 'Bebek-Çocuk 2', sira: 9, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
   { id: 'c10', lookupType: 'CINSIYET', kod: 'CINSIYET_UNISEX2', ad: 'Unisex 2', sira: 10, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+
+  // --- DOKULAR ---
+  { id: 'd1', lookupType: 'DOKU', kod: 'DOKU_DUZ', ad: 'Düz', sira: 1, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'd2', lookupType: 'DOKU', kod: 'DOKU_HAVLU', ad: 'Havlu', sira: 2, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'd3', lookupType: 'DOKU', kod: 'DOKU_YARIM_HAVLU', ad: 'Yarım Havlu', sira: 3, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'd4', lookupType: 'DOKU', kod: 'DOKU_TEKNIK_HAVLU', ad: 'Teknik Havlu', sira: 4, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'd5', lookupType: 'DOKU', kod: 'DOKU_SECMELI_HAVLU', ad: 'Seçmeli Havlu', sira: 5, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'd6', lookupType: 'DOKU', kod: 'DOKU_DERBILI', ad: 'Derbili', sira: 6, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
 
   // --- BİRİMLER ---
   { id: 'br1', lookupType: 'BIRIM', kod: 'BIRIM_CIFT', ad: 'Çift', sira: 1, carpan: 1, durum: 'AKTIF', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },

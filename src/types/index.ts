@@ -37,7 +37,7 @@ export interface Module {
 export type Bolge = 'IHRACAT' | 'IC_PIYASA';
 export type OdemeVadesiBirim = 'GUN' | 'AY';
 export type DepoTipi = 'IC_DEPO' | 'DIS_DEPO';
-export type LookupType = 'BEDEN' | 'TIP' | 'CINSIYET' | 'BIRIM';
+export type LookupType = 'BEDEN' | 'TIP' | 'CINSIYET' | 'BIRIM' | 'DOKU';
 
 export interface Musteri {
   id: string;
